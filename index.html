@@ -7,11 +7,11 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/estilos.css?v=20260622-roles-kpis" />
+  <link rel="stylesheet" href="css/estilos.css?v=20260729-gerencial-organizado" />
   <script src="data/local-data.js?v=20260616-postcosecha"></script>
   <script src="js/config.js?v=20260622-stock-core"></script>
   <script src="js/permisos.js?v=20260622-cliente-stock"></script>
-  <script src="js/nav.js?v=20260622-roles-kpis"></script>
+  <script src="js/nav.js?v=20260729-operacion"></script>
   <script src="js/panel-gerencial.js?v=20260623-hoy-automatico" defer></script>
 </head>
 <body data-module="panel">
@@ -53,12 +53,18 @@
         </div>
       </section>
 
-      <section class="dashboard-section" data-permission-group="operativo">
-        <div class="section-heading"><div><h3>Resumen Ejecutivo</h3><p>Indicadores principales para revisar el dia rapidamente.</p></div></div>
+      <section class="dashboard-section executive-section" data-permission-group="operativo">
+        <div class="section-heading">
+          <div><h3>Resumen Ejecutivo</h3><p>Indicadores principales filtrados automaticamente para el dia y el periodo seleccionado.</p></div>
+        </div>
         <div class="kpis executive-kpis" id="executiveKpis"></div>
       </section>
 
-      <section class="dashboard-grid">
+      <section class="management-band" data-permission-group="operativo">
+        <div class="section-heading">
+          <div><h3>Operacion diaria</h3><p>Campo, poscosecha, rendimiento y disponibilidad.</p></div>
+        </div>
+        <div class="dashboard-grid dashboard-grid-3">
         <div class="card panel" data-permission-group="operativo">
           <div class="section-heading"><div><h3>Produccion</h3><p>Campo, siembra y cumplimiento.</p></div></div>
           <div class="mini-kpis" id="produccionKpis"></div>
@@ -76,7 +82,14 @@
           <div class="mini-kpis" id="inventarioKpis"></div>
           <div class="table-wrap compact-table"><table><thead><tr><th>Variedad</th><th>Stock</th><th>Estado</th></tr></thead><tbody id="stockBody"></tbody></table></div>
         </div>
+        </div>
+      </section>
 
+      <section class="management-band" data-permission-group="ventas">
+        <div class="section-heading">
+          <div><h3>Comercial y finanzas</h3><p>Ventas, facturacion, cobros y saldos por cobrar.</p></div>
+        </div>
+        <div class="dashboard-grid">
         <div class="card panel" data-permission-group="ventas">
           <div class="section-heading"><div><h3>Ventas</h3><p>Salida de inventario y compradores.</p></div></div>
           <div class="mini-kpis" id="ventasKpis"></div>
@@ -88,17 +101,25 @@
           <div class="mini-kpis" id="finanzasKpis"></div>
           <div class="table-wrap compact-table"><table><thead><tr><th>Estado</th><th>Cantidad</th></tr></thead><tbody id="facturasBody"></tbody></table></div>
         </div>
+        </div>
+      </section>
 
+      <section class="management-band" data-permission-group="gerencia">
+        <div class="section-heading">
+          <div><h3>Planificacion y control</h3><p>Comparativo de proyeccion y alertas para tomar decisiones.</p></div>
+        </div>
+        <div class="dashboard-grid">
         <div class="card panel" data-permission-group="gerencia">
           <div class="section-heading"><div><h3>Proyeccion vs Real</h3><p>Cumplimiento de cosecha.</p></div></div>
           <div class="mini-kpis" id="proyeccionKpis"></div>
           <div class="table-wrap compact-table"><table><thead><tr><th>Resultado</th><th>Cantidad</th></tr></thead><tbody id="proyeccionBody"></tbody></table></div>
         </div>
-      </section>
 
-      <section class="card panel alerts-panel" data-permission-group="operativo">
-        <div class="section-heading"><div><h3>Alertas gerenciales</h3><p>Eventos que requieren atencion.</p></div></div>
-        <div id="alertsBody" class="alerts-list"></div>
+        <div class="card panel alerts-panel" data-permission-group="operativo">
+          <div class="section-heading"><div><h3>Alertas gerenciales</h3><p>Eventos que requieren atencion.</p></div></div>
+          <div id="alertsBody" class="alerts-list"></div>
+        </div>
+        </div>
       </section>
     </main>
   </div>
