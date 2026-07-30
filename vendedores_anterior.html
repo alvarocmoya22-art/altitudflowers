@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
@@ -279,11 +279,11 @@ async function loadData(){
     if(!sheetRows.length) throw new Error('La hoja DATOS_WEB no tiene registros visibles');
     rows=sheetRows;
     salesRows=[...normalizeSales(sheetSales),...normalizeSales(loadLocalSales())];
-    $('status').textContent=`En linea Â· ${rows.length} registros`;
+    $('status').textContent=`En linea · ${rows.length} registros`;
   }catch(err){
     rows=normalizeRows((window.ALTITUD_LOCAL_DATA&&window.ALTITUD_LOCAL_DATA.datos_web)||[]);
     salesRows=normalizeSales(loadLocalSales());
-    $('status').textContent=`Datos locales Â· ${rows.length} registros`;
+    $('status').textContent=`Datos locales · ${rows.length} registros`;
     $('notice').textContent='No se pudo leer la hoja en linea. Se esta mostrando la ultima copia local de vendedores.';
     $('notice').style.display='block';
   }

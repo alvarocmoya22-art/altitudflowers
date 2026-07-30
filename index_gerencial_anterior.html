@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
@@ -92,27 +92,27 @@
   <div class="shell">
     <aside>
       <div class="brand">Altitud Flowers</div>
-      <div class="brand-sub">Dashboard Gerencial de ProducciÃ³n</div>
+      <div class="brand-sub">Dashboard Gerencial de Producción</div>
       <nav>
         <a class="active" href="#resumen">Resumen ejecutivo</a>
-        <a href="#produccion">ProducciÃ³n</a>
-        <a href="#clasificacion">ClasificaciÃ³n</a>
+        <a href="#produccion">Producción</a>
+        <a href="#clasificacion">Clasificación</a>
         <a href="#variedades">Variedades</a>
         <a href="#comercial">Pedidos</a>
         <a href="#finanzas">Cartera</a>
-        <a href="#proyeccion">ProyecciÃƒÂ³n</a>
+        <a href="#proyeccion">ProyecciÃ³n</a>
         <a href="#personal">Personal</a>
         <a href="vendedores.html">Vendedores</a>
         <a href="#alertas">Alertas</a>
       </nav>
-      <div class="source">Fuente: Google Sheets Â· hoja DATOS_WEB<br>ActualizaciÃ³n automÃ¡tica al recargar.</div>
+      <div class="source">Fuente: Google Sheets · hoja DATOS_WEB<br>Actualización automática al recargar.</div>
     </aside>
 
     <main>
       <div class="topbar">
         <div>
           <h1>Dashboard Gerencial</h1>
-          <div class="subtitle">ProducciÃ³n, clasificaciÃ³n, cumplimiento, descarte e ingresos</div>
+          <div class="subtitle">Producción, clasificación, cumplimiento, descarte e ingresos</div>
         </div>
         <div class="actions">
           <button class="btn" id="sellerBtn" type="button" onclick="location.href='vendedores.html'">Vendedores</button>
@@ -133,11 +133,11 @@
       </section>
 
       <section class="kpis" id="resumen">
-        <div class="card kpi"><div class="label">Tallos cosechados</div><div class="value" id="kCosechados">â€”</div><div class="note">ProducciÃ³n real filtrada</div></div>
-        <div class="card kpi"><div class="label">Procesamiento Ãºtil</div><div class="value" id="kCumplimiento">â€”</div><div class="note">Comercial + nacional sobre procesado</div></div>
-        <div class="card kpi"><div class="label">Ingreso estimado</div><div class="value" id="kIngreso">â€”</div><div class="note">SegÃºn clasificaciÃ³n comercial</div></div>
-        <div class="card kpi"><div class="label">Descarte</div><div class="value" id="kDescarte">â€”</div><div class="note">Basura sobre cosechado</div></div>
-        <div class="card kpi"><div class="label">Registros</div><div class="value" id="kRegistros">â€”</div><div class="note">Filas activas</div></div>
+        <div class="card kpi"><div class="label">Tallos cosechados</div><div class="value" id="kCosechados">—</div><div class="note">Producción real filtrada</div></div>
+        <div class="card kpi"><div class="label">Procesamiento útil</div><div class="value" id="kCumplimiento">—</div><div class="note">Comercial + nacional sobre procesado</div></div>
+        <div class="card kpi"><div class="label">Ingreso estimado</div><div class="value" id="kIngreso">—</div><div class="note">Según clasificación comercial</div></div>
+        <div class="card kpi"><div class="label">Descarte</div><div class="value" id="kDescarte">—</div><div class="note">Basura sobre cosechado</div></div>
+        <div class="card kpi"><div class="label">Registros</div><div class="value" id="kRegistros">—</div><div class="note">Filas activas</div></div>
       </section>
 
       <section class="grid-2" id="produccion">
@@ -146,14 +146,14 @@
           <div class="chart-wrap"><canvas id="chartSemana"></canvas></div>
         </div>
         <div class="card panel" id="clasificacion">
-          <h3>DistribuciÃ³n por clasificaciÃ³n</h3>
+          <h3>Distribución por clasificación</h3>
           <div class="chart-wrap"><canvas id="chartClasificacion"></canvas></div>
         </div>
       </section>
 
       <section class="grid-3" id="variedades">
         <div class="card panel">
-          <h3>ProducciÃ³n por variedad</h3>
+          <h3>Producción por variedad</h3>
           <div class="chart-wrap"><canvas id="chartVariedad"></canvas></div>
         </div>
         <div class="card panel">
@@ -167,15 +167,15 @@
       </section>
 
       <section class="card summary">
-        <h3>Resumen ejecutivo automÃ¡tico</h3>
-        <p id="summaryText">Cargando datosâ€¦</p>
+        <h3>Resumen ejecutivo automático</h3>
+        <p id="summaryText">Cargando datos…</p>
       </section>
 
       <section class="kpis" id="comercial" style="margin-top:18px">
         <div class="card kpi"><div class="label">Tallos pedidos</div><div class="value" id="bTallosPedidos">-</div><div class="note">Pedidos registrados</div></div>
         <div class="card kpi"><div class="label">Cajas pedidas</div><div class="value" id="bCajasPedidos">-</div><div class="note">Total por carguera</div></div>
         <div class="card kpi"><div class="label">Cartera pendiente</div><div class="value" id="bCartera">-</div><div class="note">Facturas no pagadas</div></div>
-        <div class="card kpi"><div class="label">ProyecciÃƒÂ³n vendible</div><div class="value" id="bProyeccion">-</div><div class="note">Semanas 2026</div></div>
+        <div class="card kpi"><div class="label">ProyecciÃ³n vendible</div><div class="value" id="bProyeccion">-</div><div class="note">Semanas 2026</div></div>
         <div class="card kpi"><div class="label">Inventario</div><div class="value" id="bInventario">-</div><div class="note">Tallos disponibles</div></div>
       </section>
 
@@ -189,7 +189,7 @@
           <div class="chart-wrap"><canvas id="chartCuentasEstado"></canvas></div>
         </div>
         <div class="card panel" id="proyeccion">
-          <h3>ProyecciÃƒÂ³n de cosecha</h3>
+          <h3>ProyecciÃ³n de cosecha</h3>
           <div class="chart-wrap"><canvas id="chartProyeccion"></canvas></div>
         </div>
       </section>
@@ -224,7 +224,7 @@
           <h3>Detalle de personal</h3>
           <div class="table-wrap">
             <table>
-              <thead><tr><th>Fecha</th><th>Persona</th><th>Trabajo</th><th>Variedad</th><th>TamaÃƒÂ±o</th><th>Bunches</th><th>Tallos est.</th></tr></thead>
+              <thead><tr><th>Fecha</th><th>Persona</th><th>Trabajo</th><th>Variedad</th><th>TamaÃ±o</th><th>Bunches</th><th>Tallos est.</th></tr></thead>
               <tbody id="staffBody"></tbody>
             </table>
           </div>
@@ -409,8 +409,8 @@ function renderCharts(rows){
 
 function renderAlerts(m){
   const alerts=[];
-  alerts.push(['Procesamiento Ãºtil',fmtPct(m.cumplimiento),m.cumplimiento>=.95?'ok':m.cumplimiento>=.9?'warn':'bad',m.cumplimiento>=.95?'Ã“ptimo':m.cumplimiento>=.9?'AtenciÃ³n':'CrÃ­tico']);
-  alerts.push(['Descarte',fmtPct(m.descarte),m.descarte<=.10?'ok':m.descarte<=.20?'warn':'bad',m.descarte<=.10?'Controlado':m.descarte<=.20?'AtenciÃ³n':'CrÃ­tico']);
+  alerts.push(['Procesamiento útil',fmtPct(m.cumplimiento),m.cumplimiento>=.95?'ok':m.cumplimiento>=.9?'warn':'bad',m.cumplimiento>=.95?'Óptimo':m.cumplimiento>=.9?'Atención':'Crítico']);
+  alerts.push(['Descarte',fmtPct(m.descarte),m.descarte<=.10?'ok':m.descarte<=.20?'warn':'bad',m.descarte<=.10?'Controlado':m.descarte<=.20?'Atención':'Crítico']);
   alerts.push(['Tallos procesados',fmtInt(m.cosechado),'ok','Base']);
   alerts.push(['Registros con alerta',fmtInt(m.rows.filter(r=>String(r.estado_cumplimiento).includes('BAJO')||String(r.estado_descarte).includes('CRITICO')).length),'warn','Revisar']);
   document.getElementById('alertsList').innerHTML=alerts.map(a=>`<div class="alert"><div><strong>${a[0]}</strong><div style="font-size:12px;color:#718078;margin-top:4px">${a[1]}</div></div><span class="badge ${a[2]}">${a[3]}</span></div>`).join('');
@@ -419,7 +419,7 @@ function renderAlerts(m){
 function renderSummary(rows,m){
   const byVar=aggregate(rows,'variedad','tallos_procesados');
   const top=Object.keys(byVar).sort((a,b)=>byVar[b]-byVar[a])[0]||'Sin datos';
-  const text=`En el perÃ­odo seleccionado se procesaron ${fmtInt(m.cosechado)} tallos. El aprovechamiento Ãºtil fue de ${fmtPct(m.cumplimiento)} y el descarte fue de ${fmtPct(m.descarte)}. La variedad con mayor procesamiento fue ${top}.`;
+  const text=`En el período seleccionado se procesaron ${fmtInt(m.cosechado)} tallos. El aprovechamiento útil fue de ${fmtPct(m.cumplimiento)} y el descarte fue de ${fmtPct(m.descarte)}. La variedad con mayor procesamiento fue ${top}.`;
   document.getElementById('summaryText').textContent=text;
 }
 
@@ -618,7 +618,7 @@ function renderStaffDashboard(rows){
   const people=topLabels(byPerson,8);
   makeChart('chartPersonal','bar',{labels:people,datasets:[{label:'Bunches',data:people.map(p=>byPerson[p]),backgroundColor:'#6ea085',borderRadius:8}]},{plugins:{legend:{display:false}}});
   const visible=(active.length?active:rows.filter(r=>r.persona)).slice().reverse().slice(0,12);
-  document.getElementById('staffBody').innerHTML=visible.map(r=>`<tr><td>${parseDate(r.fecha)}</td><td>${r.persona||''}</td><td>${r.tipo_trabajo||''}</td><td>${r.variedad||''}</td><td>${r.tamano_cm||''}</td><td>${r.bunches_procesados?fmtInt(r.bunches_procesados):''}</td><td>${r.tallos_estimados?fmtInt(r.tallos_estimados):''}</td></tr>`).join('') || `<tr><td colspan="7">La hoja PROCESAMIENTO_PERSONAL estÃƒÂ¡ lista. Agrega una fila por cada trabajo real: persona, variedad, tamaÃƒÂ±o y bunches procesados.</td></tr>`;
+  document.getElementById('staffBody').innerHTML=visible.map(r=>`<tr><td>${parseDate(r.fecha)}</td><td>${r.persona||''}</td><td>${r.tipo_trabajo||''}</td><td>${r.variedad||''}</td><td>${r.tamano_cm||''}</td><td>${r.bunches_procesados?fmtInt(r.bunches_procesados):''}</td><td>${r.tallos_estimados?fmtInt(r.tallos_estimados):''}</td></tr>`).join('') || `<tr><td colspan="7">La hoja PROCESAMIENTO_PERSONAL estÃ¡ lista. Agrega una fila por cada trabajo real: persona, variedad, tamaÃ±o y bunches procesados.</td></tr>`;
 }
 
 function demoRows(){
@@ -646,13 +646,13 @@ function initializeFiltersAndControls(){
 async function load(){
   try{
     const res=await fetch(DATA_URL);
-    if(!res.ok) throw new Error('No se pudo leer Google Sheets. Verifica que el documento estÃ© compartido como lector para cualquier persona con el enlace.');
+    if(!res.ok) throw new Error('No se pudo leer Google Sheets. Verifica que el documento esté compartido como lector para cualquier persona con el enlace.');
     const text=await res.text();
     const json=JSON.parse(text.substring(text.indexOf('{'),text.lastIndexOf('}')+1));
     rawData=normalizeRows(gvizToObjects(json));
     if(!rawData.length) throw new Error('La hoja DATOS_WEB no tiene registros visibles o no conserva los nombres de columnas esperados.');
     initializeFiltersAndControls();
-    document.getElementById('status').textContent=`Conectado Â· ${rawData.length} registros`;
+    document.getElementById('status').textContent=`Conectado · ${rawData.length} registros`;
     render();
   }catch(err){
     const box=document.getElementById('errorBox');box.style.display='block';box.textContent=err.message;
