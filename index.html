@@ -1,0 +1,108 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Altitud Flowers | Panel Gerencial</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/estilos.css?v=20260622-roles-kpis" />
+  <script src="data/local-data.js?v=20260616-postcosecha"></script>
+  <script src="js/config.js?v=20260622-stock-core"></script>
+  <script src="js/permisos.js?v=20260622-cliente-stock"></script>
+  <script src="js/nav.js?v=20260622-roles-kpis"></script>
+  <script src="js/panel-gerencial.js?v=20260623-hoy-automatico" defer></script>
+</head>
+<body data-module="panel">
+  <div class="shell">
+    <aside class="sidebar">
+      <div class="brand">Altitud Flowers</div>
+      <div class="brand-sub">Sistema operativo y gerencial</div>
+      <nav class="nav" data-nav></nav>
+      <div class="source">Flujo: Campo -> Poscosecha -> Rendimiento -> Cuarto frio -> Ventas -> Reportes</div>
+    </aside>
+
+    <main class="main dashboard-page">
+      <section class="module-hero">
+        <div>
+          <div class="module-eyebrow">Panel gerencial</div>
+          <h1>Resumen ejecutivo</h1>
+          <div class="subtitle">KPIs consolidados de produccion, poscosecha, inventario, ventas, finanzas y proyeccion.</div>
+        </div>
+        <div class="actions">
+          <div class="status" id="roleStatus">Rol: verificando...</div>
+          <div class="status" id="status">Cargando...</div>
+        </div>
+      </section>
+
+      <section class="card panel dashboard-filters">
+        <div class="section-heading">
+          <div><h3>Filtros generales</h3><p>Estos filtros actualizan los indicadores del panel.</p></div>
+          <button class="btn" id="clearFilters" type="button">Limpiar filtros</button>
+        </div>
+        <div class="filters">
+          <div class="field"><label for="filterDesde">Fecha desde</label><input id="filterDesde" type="date"></div>
+          <div class="field"><label for="filterHasta">Fecha hasta</label><input id="filterHasta" type="date"></div>
+          <div class="field"><label for="filterSemana">Semana</label><input id="filterSemana" type="number" min="1" max="53"></div>
+          <div class="field"><label for="filterMes">Mes</label><select id="filterMes"><option value="">Todos</option></select></div>
+          <div class="field"><label for="filterVariedad">Variedad</label><select id="filterVariedad"><option value="">Todas</option></select></div>
+          <div class="field"><label for="filterSiembra">Siembra</label><input id="filterSiembra"></div>
+          <div class="field"><label for="filterCliente">Cliente</label><input id="filterCliente"></div>
+          <div class="field"><label for="filterVendedor">Vendedor</label><input id="filterVendedor"></div>
+        </div>
+      </section>
+
+      <section class="dashboard-section" data-permission-group="operativo">
+        <div class="section-heading"><div><h3>Resumen Ejecutivo</h3><p>Indicadores principales para revisar el dia rapidamente.</p></div></div>
+        <div class="kpis executive-kpis" id="executiveKpis"></div>
+      </section>
+
+      <section class="dashboard-grid">
+        <div class="card panel" data-permission-group="operativo">
+          <div class="section-heading"><div><h3>Produccion</h3><p>Campo, siembra y cumplimiento.</p></div></div>
+          <div class="mini-kpis" id="produccionKpis"></div>
+          <div class="table-wrap compact-table"><table><thead><tr><th>Detalle</th><th>Valor</th></tr></thead><tbody id="produccionBody"></tbody></table></div>
+        </div>
+
+        <div class="card panel" data-permission-group="operativo">
+          <div class="section-heading"><div><h3>Poscosecha</h3><p>Procesado, descarte y medidas.</p></div></div>
+          <div class="mini-kpis" id="poscosechaKpis"></div>
+          <div class="table-wrap compact-table"><table><thead><tr><th>Medida</th><th>Tallos</th></tr></thead><tbody id="medidasBody"></tbody></table></div>
+        </div>
+
+        <div class="card panel" data-permission-group="operativo">
+          <div class="section-heading"><div><h3>Cuarto Frio</h3><p>Disponibilidad por variedad.</p></div></div>
+          <div class="mini-kpis" id="inventarioKpis"></div>
+          <div class="table-wrap compact-table"><table><thead><tr><th>Variedad</th><th>Stock</th><th>Estado</th></tr></thead><tbody id="stockBody"></tbody></table></div>
+        </div>
+
+        <div class="card panel" data-permission-group="ventas">
+          <div class="section-heading"><div><h3>Ventas</h3><p>Salida de inventario y compradores.</p></div></div>
+          <div class="mini-kpis" id="ventasKpis"></div>
+          <div class="table-wrap compact-table"><table><thead><tr><th>Detalle</th><th>Valor</th></tr></thead><tbody id="ventasBody"></tbody></table></div>
+        </div>
+
+        <div class="card panel" data-permission-group="finanzas">
+          <div class="section-heading"><div><h3>Finanzas</h3><p>Facturacion, cobros y saldos.</p></div></div>
+          <div class="mini-kpis" id="finanzasKpis"></div>
+          <div class="table-wrap compact-table"><table><thead><tr><th>Estado</th><th>Cantidad</th></tr></thead><tbody id="facturasBody"></tbody></table></div>
+        </div>
+
+        <div class="card panel" data-permission-group="gerencia">
+          <div class="section-heading"><div><h3>Proyeccion vs Real</h3><p>Cumplimiento de cosecha.</p></div></div>
+          <div class="mini-kpis" id="proyeccionKpis"></div>
+          <div class="table-wrap compact-table"><table><thead><tr><th>Resultado</th><th>Cantidad</th></tr></thead><tbody id="proyeccionBody"></tbody></table></div>
+        </div>
+      </section>
+
+      <section class="card panel alerts-panel" data-permission-group="operativo">
+        <div class="section-heading"><div><h3>Alertas gerenciales</h3><p>Eventos que requieren atencion.</p></div></div>
+        <div id="alertsBody" class="alerts-list"></div>
+      </section>
+    </main>
+  </div>
+</body>
+</html>
+
+

@@ -1,0 +1,18 @@
+# Archivos del sistema
+.DS_Store
+Thumbs.db
+
+# Dependencias y builds locales
+node_modules/
+.netlify/
+dist/
+build/
+
+# Temporales y logs
+*.log
+*.tmp
+*.bak
+~$*
+
+# Paquetes generados para despliegue manual
+*.zip

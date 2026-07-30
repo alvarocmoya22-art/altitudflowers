@@ -1,0 +1,673 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Altitud Flowers Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="data/local-data.js?v=20260616-postcosecha"></script>
+  <style>
+    :root{
+      --green-950:#102c21;
+      --green-900:#163b2a;
+      --green-800:#1d4d36;
+      --green-700:#2f6b4d;
+      --green-100:#e9f3ed;
+      --cream:#f7f4ed;
+      --gold:#b7924a;
+      --red:#b33a3a;
+      --orange:#c9831d;
+      --text:#1e2a25;
+      --muted:#718078;
+      --card:#ffffff;
+      --border:#dfe8e2;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:Inter,sans-serif;background:linear-gradient(180deg,#f8fbf9 0%,#eef4f0 100%);color:var(--text)}
+    .shell{display:grid;grid-template-columns:260px 1fr;min-height:100vh}
+    aside{background:var(--green-950);color:white;padding:28px 20px;position:sticky;top:0;height:100vh}
+    .brand{font-family:'Playfair Display',serif;font-size:25px;line-height:1.1;margin-bottom:8px}
+    .brand-sub{font-size:12px;color:#c8d8cf;margin-bottom:30px}
+    nav a{display:block;color:#dce9e1;text-decoration:none;padding:11px 12px;border-radius:10px;margin-bottom:6px;font-size:14px}
+    nav a:hover, nav a.active{background:rgba(255,255,255,.1);color:white}
+    .source{position:absolute;bottom:24px;left:20px;right:20px;font-size:11px;color:#9fb8aa;line-height:1.5}
+    main{padding:28px}
+    .topbar{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;margin-bottom:24px}
+    .actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end}
+    h1{margin:0;font-size:31px;font-weight:800}
+    .subtitle{color:var(--muted);margin-top:6px;font-size:14px}
+    .status{background:var(--green-100);color:var(--green-800);padding:10px 14px;border-radius:999px;font-size:13px;font-weight:700}
+    .btn{border:1px solid var(--border);background:#fff;color:var(--green-800);border-radius:999px;padding:10px 14px;font:inherit;font-size:13px;font-weight:800;cursor:pointer;box-shadow:0 6px 18px rgba(30,74,52,.05)}
+    .btn:hover{border-color:#b9cec0;background:#f7fbf8}
+    .filters{display:grid;grid-template-columns:repeat(5,minmax(150px,1fr));gap:12px;margin-bottom:20px}
+    .filter{background:var(--card);border:1px solid var(--border);padding:12px;border-radius:14px}
+    .filter label{display:block;font-size:11px;font-weight:700;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em}
+    select,input{width:100%;border:0;outline:0;font:inherit;background:transparent;color:var(--text)}
+    .kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:20px}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:18px;box-shadow:0 8px 26px rgba(30,74,52,.06)}
+    .kpi{padding:18px}
+    .kpi .label{font-size:12px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.05em}
+    .kpi .value{font-size:28px;font-weight:800;margin-top:8px}
+    .kpi .note{font-size:12px;color:var(--muted);margin-top:8px}
+    .grid-2{display:grid;grid-template-columns:1.25fr 1fr;gap:18px;margin-bottom:18px}
+    .grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:18px;margin-bottom:18px}
+    .panel{padding:18px;min-height:330px}
+    .panel h3{margin:0 0 16px;font-size:16px}
+    .chart-wrap{height:260px}
+    .summary{padding:22px;background:linear-gradient(135deg,var(--green-900),var(--green-700));color:white}
+    .summary h3{margin-top:0}
+    .summary p{line-height:1.7;margin:0;color:#edf5f0}
+    .alerts{padding:18px}
+    .alert{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--border);gap:12px}
+    .alert:last-child{border-bottom:0}
+    .badge{padding:5px 10px;border-radius:999px;font-size:11px;font-weight:800}
+    .ok{background:#dff3e5;color:#23623b}
+    .warn{background:#fff0cf;color:#8a5d00}
+    .bad{background:#f9d9d9;color:#8d2929}
+    .table-wrap{overflow:auto;max-height:360px}
+    table{width:100%;border-collapse:collapse;font-size:13px}
+    th,td{padding:10px 12px;border-bottom:1px solid var(--border);text-align:left;white-space:nowrap}
+    th{position:sticky;top:0;background:#f3f7f4;font-size:11px;text-transform:uppercase;color:var(--muted)}
+    .error{display:none;background:#fde8e8;color:#8c2a2a;padding:14px 16px;border-radius:12px;margin-bottom:18px;border:1px solid #f2bcbc}
+    .empty{display:none;text-align:center;color:var(--muted);padding:26px;border:1px dashed var(--border);border-radius:14px;background:#fbfdfb}
+    @media(max-width:1100px){
+      .shell{grid-template-columns:1fr}
+      aside{display:none}
+      .filters,.kpis,.grid-3{grid-template-columns:repeat(2,1fr)}
+      .grid-2{grid-template-columns:1fr}
+    }
+    @media(max-width:680px){
+      main{padding:16px}
+      .filters,.kpis,.grid-3{grid-template-columns:1fr}
+      h1{font-size:25px}
+      .topbar{flex-direction:column}
+      .actions{justify-content:flex-start}
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <aside>
+      <div class="brand">Altitud Flowers</div>
+      <div class="brand-sub">Dashboard Gerencial de ProducciÃ³n</div>
+      <nav>
+        <a class="active" href="#resumen">Resumen ejecutivo</a>
+        <a href="#produccion">ProducciÃ³n</a>
+        <a href="#clasificacion">ClasificaciÃ³n</a>
+        <a href="#variedades">Variedades</a>
+        <a href="#comercial">Pedidos</a>
+        <a href="#finanzas">Cartera</a>
+        <a href="#proyeccion">ProyecciÃƒÂ³n</a>
+        <a href="#personal">Personal</a>
+        <a href="vendedores.html">Vendedores</a>
+        <a href="#alertas">Alertas</a>
+      </nav>
+      <div class="source">Fuente: Google Sheets Â· hoja DATOS_WEB<br>ActualizaciÃ³n automÃ¡tica al recargar.</div>
+    </aside>
+
+    <main>
+      <div class="topbar">
+        <div>
+          <h1>Dashboard Gerencial</h1>
+          <div class="subtitle">ProducciÃ³n, clasificaciÃ³n, cumplimiento, descarte e ingresos</div>
+        </div>
+        <div class="actions">
+          <button class="btn" id="sellerBtn" type="button" onclick="location.href='vendedores.html'">Vendedores</button>
+          <button class="btn" id="resetBtn" type="button">Limpiar filtros</button>
+          <button class="btn" id="exportBtn" type="button">Exportar CSV</button>
+          <div class="status" id="status">Conectando con Google Sheets...</div>
+        </div>
+      </div>
+
+      <div class="error" id="errorBox"></div>
+
+      <section class="filters">
+        <div class="filter"><label>Semana</label><select id="fSemana"><option value="">Todas</option></select></div>
+        <div class="filter"><label>Mes</label><select id="fMes"><option value="">Todos</option></select></div>
+        <div class="filter"><label>Variedad</label><select id="fVariedad"><option value="">Todas</option></select></div>
+        <div class="filter"><label>Siembra</label><select id="fSiembra"><option value="">Todas</option></select></div>
+        <div class="filter"><label>Buscar cama</label><input id="fCama" placeholder="Ej. 12" /></div>
+      </section>
+
+      <section class="kpis" id="resumen">
+        <div class="card kpi"><div class="label">Tallos cosechados</div><div class="value" id="kCosechados">â€”</div><div class="note">ProducciÃ³n real filtrada</div></div>
+        <div class="card kpi"><div class="label">Procesamiento Ãºtil</div><div class="value" id="kCumplimiento">â€”</div><div class="note">Comercial + nacional sobre procesado</div></div>
+        <div class="card kpi"><div class="label">Ingreso estimado</div><div class="value" id="kIngreso">â€”</div><div class="note">SegÃºn clasificaciÃ³n comercial</div></div>
+        <div class="card kpi"><div class="label">Descarte</div><div class="value" id="kDescarte">â€”</div><div class="note">Basura sobre cosechado</div></div>
+        <div class="card kpi"><div class="label">Registros</div><div class="value" id="kRegistros">â€”</div><div class="note">Filas activas</div></div>
+      </section>
+
+      <section class="grid-2" id="produccion">
+        <div class="card panel">
+          <h3>Tallos procesados por semana</h3>
+          <div class="chart-wrap"><canvas id="chartSemana"></canvas></div>
+        </div>
+        <div class="card panel" id="clasificacion">
+          <h3>DistribuciÃ³n por clasificaciÃ³n</h3>
+          <div class="chart-wrap"><canvas id="chartClasificacion"></canvas></div>
+        </div>
+      </section>
+
+      <section class="grid-3" id="variedades">
+        <div class="card panel">
+          <h3>ProducciÃ³n por variedad</h3>
+          <div class="chart-wrap"><canvas id="chartVariedad"></canvas></div>
+        </div>
+        <div class="card panel">
+          <h3>Ingreso por variedad</h3>
+          <div class="chart-wrap"><canvas id="chartIngresoVariedad"></canvas></div>
+        </div>
+        <div class="card alerts" id="alertas">
+          <h3>Alertas y control</h3>
+          <div id="alertsList"></div>
+        </div>
+      </section>
+
+      <section class="card summary">
+        <h3>Resumen ejecutivo automÃ¡tico</h3>
+        <p id="summaryText">Cargando datosâ€¦</p>
+      </section>
+
+      <section class="kpis" id="comercial" style="margin-top:18px">
+        <div class="card kpi"><div class="label">Tallos pedidos</div><div class="value" id="bTallosPedidos">-</div><div class="note">Pedidos registrados</div></div>
+        <div class="card kpi"><div class="label">Cajas pedidas</div><div class="value" id="bCajasPedidos">-</div><div class="note">Total por carguera</div></div>
+        <div class="card kpi"><div class="label">Cartera pendiente</div><div class="value" id="bCartera">-</div><div class="note">Facturas no pagadas</div></div>
+        <div class="card kpi"><div class="label">ProyecciÃƒÂ³n vendible</div><div class="value" id="bProyeccion">-</div><div class="note">Semanas 2026</div></div>
+        <div class="card kpi"><div class="label">Inventario</div><div class="value" id="bInventario">-</div><div class="note">Tallos disponibles</div></div>
+      </section>
+
+      <section class="grid-3" id="finanzas">
+        <div class="card panel">
+          <h3>Pedidos por carguera</h3>
+          <div class="chart-wrap"><canvas id="chartPedidosCarguera"></canvas></div>
+        </div>
+        <div class="card panel">
+          <h3>Estado de cuenta</h3>
+          <div class="chart-wrap"><canvas id="chartCuentasEstado"></canvas></div>
+        </div>
+        <div class="card panel" id="proyeccion">
+          <h3>ProyecciÃƒÂ³n de cosecha</h3>
+          <div class="chart-wrap"><canvas id="chartProyeccion"></canvas></div>
+        </div>
+      </section>
+
+      <section class="grid-2">
+        <div class="card panel" style="min-height:260px">
+          <h3>Pedidos recientes</h3>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Fecha</th><th>Carguera</th><th>Color</th><th>Medida</th><th>Cajas</th><th>Tallos</th><th>Factura</th></tr></thead>
+              <tbody id="ordersBody"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="card panel" style="min-height:260px">
+          <h3>Cuentas pendientes</h3>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Factura</th><th>Cliente</th><th>Fecha</th><th>Valor</th><th>Estado</th></tr></thead>
+              <tbody id="accountsBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section class="grid-2" id="personal">
+        <div class="card panel" style="min-height:260px">
+          <h3>Procesamiento por persona</h3>
+          <div class="chart-wrap"><canvas id="chartPersonal"></canvas></div>
+        </div>
+        <div class="card panel" style="min-height:260px">
+          <h3>Detalle de personal</h3>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Fecha</th><th>Persona</th><th>Trabajo</th><th>Variedad</th><th>TamaÃƒÂ±o</th><th>Bunches</th><th>Tallos est.</th></tr></thead>
+              <tbody id="staffBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section class="card panel" style="margin-top:18px;min-height:280px">
+        <h3>Detalle de registros</h3>
+        <div class="empty" id="emptyState">No hay registros para los filtros seleccionados.</div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Fecha</th><th>Semana</th><th>Variedad</th><th>Siembra</th><th>Cama</th><th>Procesados</th><th>70</th><th>60</th><th>55</th><th>50</th><th>Nacional</th><th>Basura</th></tr></thead>
+            <tbody id="detailBody"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </div>
+
+<script>
+const SHEET_ID = '1Dru-SjYwkxw8J8Z6OqqC5nGsPOJCiLPvY3rJcNFALgQ';
+const SHEET_NAME = 'DATOS_WEB';
+const DATA_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(SHEET_NAME)}`;
+
+let rawData = [];
+let charts = {};
+let businessData = window.ALTITUD_LOCAL_DATA || {};
+
+const fmtInt = n => new Intl.NumberFormat('es-EC',{maximumFractionDigits:0}).format(n||0);
+const fmtMoney = n => new Intl.NumberFormat('es-EC',{style:'currency',currency:'USD'}).format(n||0);
+const fmtPct = n => new Intl.NumberFormat('es-EC',{style:'percent',maximumFractionDigits:1}).format(n||0);
+
+function gvizToObjects(json){
+  const cols = json.table.cols.map(c => c.label || c.id);
+  return json.table.rows.map(r => {
+    const obj = {};
+    cols.forEach((c,i)=> obj[c] = r.c[i] ? (r.c[i].v ?? null) : null);
+    return obj;
+  }).filter(r => r.fecha || r.id_registro);
+}
+
+function gvizToAllObjects(json){
+  const cols = json.table.cols.map(c => c.label || c.id);
+  return json.table.rows.map(r => {
+    const obj = {};
+    cols.forEach((c,i)=> obj[c] = r.c[i] ? (r.c[i].v ?? null) : null);
+    return obj;
+  }).filter(r => Object.values(r).some(v=>v!==null && v!=='' && v!==undefined));
+}
+
+function normalizeRows(rows){
+  return rows.map(r => {
+    const tallos70=Number(r.tallos_70)||0;
+    const tallos60=Number(r.tallos_60)||0;
+    const tallos55=Number(r.tallos_55)||0;
+    const tallos50=Number(r.tallos_50)||0;
+    const nacional=Number(r.nacional)||0;
+    const basura=Number(r.basura)||0;
+    const procesados=Number(r.tallos_procesados)||tallos70+tallos60+tallos55+tallos50+nacional+basura;
+    return {
+      ...r,
+      fecha: r.fecha instanceof Date ? r.fecha : r.fecha,
+      semana: Number(r.semana)||0,
+      mes_num: Number(r.mes_num)||0,
+      tallos_procesados:procesados,
+      tallos_solicitados:procesados,
+      tallos_cosechados:procesados,
+      cumplimiento_pct:Number(r.aprovechamiento_pct)||Number(r.cumplimiento_pct)|| (procesados?(procesados-basura)/procesados:0),
+      tallos_70:tallos70,
+      tallos_60:tallos60,
+      tallos_55:tallos55,
+      tallos_50:tallos50,
+      nacional,
+      basura,
+      descarte_pct:Number(r.descarte_pct)|| (procesados?basura/procesados:0),
+      ingreso_total:Number(r.ingreso_total)||0,
+      diferencia_tallos:Number(r.diferencia_tallos)||0,
+      estado_cumplimiento:r.estado_aprovechamiento||r.estado_cumplimiento||'',
+      estado_descarte:r.estado_descarte||''
+    };
+  });
+}
+
+function unique(arr){ return [...new Set(arr.filter(v=>v!==null && v!==''))].sort((a,b)=> String(a).localeCompare(String(b), 'es', {numeric:true})); }
+function fillSelect(id, values){
+  const el=document.getElementById(id);
+  el.querySelectorAll('option:not(:first-child)').forEach(o=>o.remove());
+  values.forEach(v=>{const o=document.createElement('option');o.value=v;o.textContent=v;el.appendChild(o)});
+}
+
+function bindControls(){
+  document.querySelectorAll('select,input').forEach(el=>el.addEventListener('input',render));
+  document.getElementById('resetBtn').addEventListener('click',resetFilters);
+  document.getElementById('exportBtn').addEventListener('click',exportCsv);
+}
+
+function resetFilters(){
+  ['fSemana','fMes','fVariedad','fSiembra'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('fCama').value='';
+  render();
+}
+
+function csvCell(value){
+  return `"${String(value ?? '').replaceAll('"','""')}"`;
+}
+
+function exportCsv(){
+  const rows=getFiltered();
+  const headers=['fecha','semana','mes','variedad','siembra','cama','tallos_procesados','tallos_70','tallos_60','tallos_55','tallos_50','nacional','basura','descarte_pct'];
+  const csv=[headers.join(','),...rows.map(r=>headers.map(h=>csvCell(r[h])).join(','))].join('\n');
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;
+  a.download=`altitud-flowers-dashboard-${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function getFiltered(){
+  const semana=document.getElementById('fSemana').value;
+  const mes=document.getElementById('fMes').value;
+  const variedad=document.getElementById('fVariedad').value;
+  const siembra=document.getElementById('fSiembra').value;
+  const cama=document.getElementById('fCama').value.trim().toLowerCase();
+  return rawData.filter(r =>
+    (!semana || String(r.semana)===semana) &&
+    (!mes || String(r.mes)===mes) &&
+    (!variedad || String(r.variedad)===variedad) &&
+    (!siembra || String(r.siembra)===siembra) &&
+    (!cama || String(r.cama||'').toLowerCase().includes(cama))
+  );
+}
+
+function aggregate(rows,key,metric){
+  const out={}; rows.forEach(r=>{const k=r[key]||'Sin dato';out[k]=(out[k]||0)+(Number(r[metric])||0)}); return out;
+}
+
+function render(){
+  const rows=getFiltered();
+  const solicitado=rows.reduce((s,r)=>s+r.tallos_procesados,0);
+  const cosechado=rows.reduce((s,r)=>s+r.tallos_procesados,0);
+  const ingreso=rows.reduce((s,r)=>s+r.ingreso_total,0);
+  const basura=rows.reduce((s,r)=>s+r.basura,0);
+  const cumplimiento=cosechado?(cosechado-basura)/cosechado:0;
+  const descarte=cosechado?basura/cosechado:0;
+
+  document.getElementById('kCosechados').textContent=fmtInt(cosechado);
+  document.getElementById('kCumplimiento').textContent=fmtPct(cumplimiento);
+  document.getElementById('kIngreso').textContent=fmtMoney(ingreso);
+  document.getElementById('kDescarte').textContent=fmtPct(descarte);
+  document.getElementById('kRegistros').textContent=fmtInt(rows.length);
+
+  renderCharts(rows);
+  renderAlerts({cumplimiento,descarte,cosechado,solicitado,rows});
+  renderSummary(rows,{cumplimiento,descarte,cosechado,ingreso});
+  renderTable(rows);
+}
+
+function makeChart(id,type,data,options={}){
+  if(charts[id]) charts[id].destroy();
+  charts[id]=new Chart(document.getElementById(id),{type,data,options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}},scales:type==='doughnut'?{}:{y:{beginAtZero:true,grid:{color:'#edf2ef'}},x:{grid:{display:false}}},...options}});
+}
+
+function renderCharts(rows){
+  const byWeekProcessed=aggregate(rows,'semana','tallos_procesados');
+  const byWeekWaste=aggregate(rows,'semana','basura');
+  const weeks=unique([...Object.keys(byWeekProcessed)]).sort((a,b)=>Number(a)-Number(b));
+  makeChart('chartSemana','line',{labels:weeks.map(w=>'S'+w),datasets:[{label:'Procesados',data:weeks.map(w=>byWeekProcessed[w]||0),borderColor:'#2f6b4d',backgroundColor:'rgba(47,107,77,.12)',tension:.25},{label:'Basura',data:weeks.map(w=>byWeekWaste[w]||0),borderColor:'#b33a3a',backgroundColor:'rgba(179,58,58,.10)',tension:.25}]});
+
+  const classData=[rows.reduce((s,r)=>s+r.tallos_70,0),rows.reduce((s,r)=>s+r.tallos_60,0),rows.reduce((s,r)=>s+r.tallos_55,0),rows.reduce((s,r)=>s+r.tallos_50,0),rows.reduce((s,r)=>s+r.nacional,0),rows.reduce((s,r)=>s+r.basura,0)];
+  makeChart('chartClasificacion','doughnut',{labels:['70 cm','60 cm','55 cm','50 cm','Nacional','Basura'],datasets:[{data:classData,backgroundColor:['#153e2c','#2f6b4d','#6ea085','#b7924a','#cdbb8f','#b33a3a'],borderWidth:0}]});
+
+  const byVar=aggregate(rows,'variedad','tallos_procesados');
+  const vars=Object.keys(byVar).sort((a,b)=>byVar[b]-byVar[a]);
+  makeChart('chartVariedad','bar',{labels:vars,datasets:[{label:'Tallos',data:vars.map(v=>byVar[v]),backgroundColor:'#2f6b4d',borderRadius:8}]},{plugins:{legend:{display:false}}});
+
+  const byVarIncome=aggregate(rows,'variedad','ingreso_total');
+  const vars2=Object.keys(byVarIncome).sort((a,b)=>byVarIncome[b]-byVarIncome[a]);
+  makeChart('chartIngresoVariedad','bar',{labels:vars2,datasets:[{label:'USD',data:vars2.map(v=>byVarIncome[v]),backgroundColor:'#b7924a',borderRadius:8}]},{plugins:{legend:{display:false}}});
+}
+
+function renderAlerts(m){
+  const alerts=[];
+  alerts.push(['Procesamiento Ãºtil',fmtPct(m.cumplimiento),m.cumplimiento>=.95?'ok':m.cumplimiento>=.9?'warn':'bad',m.cumplimiento>=.95?'Ã“ptimo':m.cumplimiento>=.9?'AtenciÃ³n':'CrÃ­tico']);
+  alerts.push(['Descarte',fmtPct(m.descarte),m.descarte<=.10?'ok':m.descarte<=.20?'warn':'bad',m.descarte<=.10?'Controlado':m.descarte<=.20?'AtenciÃ³n':'CrÃ­tico']);
+  alerts.push(['Tallos procesados',fmtInt(m.cosechado),'ok','Base']);
+  alerts.push(['Registros con alerta',fmtInt(m.rows.filter(r=>String(r.estado_cumplimiento).includes('BAJO')||String(r.estado_descarte).includes('CRITICO')).length),'warn','Revisar']);
+  document.getElementById('alertsList').innerHTML=alerts.map(a=>`<div class="alert"><div><strong>${a[0]}</strong><div style="font-size:12px;color:#718078;margin-top:4px">${a[1]}</div></div><span class="badge ${a[2]}">${a[3]}</span></div>`).join('');
+}
+
+function renderSummary(rows,m){
+  const byVar=aggregate(rows,'variedad','tallos_procesados');
+  const top=Object.keys(byVar).sort((a,b)=>byVar[b]-byVar[a])[0]||'Sin datos';
+  const text=`En el perÃ­odo seleccionado se procesaron ${fmtInt(m.cosechado)} tallos. El aprovechamiento Ãºtil fue de ${fmtPct(m.cumplimiento)} y el descarte fue de ${fmtPct(m.descarte)}. La variedad con mayor procesamiento fue ${top}.`;
+  document.getElementById('summaryText').textContent=text;
+}
+
+function parseDate(v){
+  if(!v) return '';
+  if(typeof v==='string' && /^\d{4}-\d{2}-\d{2}$/.test(v)){
+    const [year,month,day]=v.split('-').map(Number);
+    return new Date(year,month-1,day).toLocaleDateString('es-EC');
+  }
+  if(typeof v==='string' && v.startsWith('Date(')){
+    const nums=v.match(/\d+/g).map(Number);return new Date(nums[0],nums[1],nums[2]).toLocaleDateString('es-EC');
+  }
+  const d=new Date(v); return isNaN(d)?String(v):d.toLocaleDateString('es-EC');
+}
+
+function renderTable(rows){
+  const body=document.getElementById('detailBody');
+  document.getElementById('emptyState').style.display=rows.length?'none':'block';
+  body.innerHTML=rows.slice().reverse().slice(0,150).map(r=>`<tr><td>${parseDate(r.fecha)}</td><td>${r.semana||''}</td><td>${r.variedad||''}</td><td>${r.siembra||''}</td><td>${r.cama||''}</td><td>${fmtInt(r.tallos_procesados)}</td><td>${fmtInt(r.tallos_70)}</td><td>${fmtInt(r.tallos_60)}</td><td>${fmtInt(r.tallos_55)}</td><td>${fmtInt(r.tallos_50)}</td><td>${fmtInt(r.nacional)}</td><td>${fmtInt(r.basura)}</td></tr>`).join('');
+}
+
+function localRows(name){
+  return (businessData && Array.isArray(businessData[name])) ? businessData[name] : [];
+}
+
+function sumRows(rows, key){
+  return rows.reduce((total,row)=>total+(Number(row[key])||0),0);
+}
+
+function groupSum(rows, key, metric){
+  const out={};
+  rows.forEach(row=>{
+    const label=row[key] || 'Sin dato';
+    out[label]=(out[label]||0)+(Number(row[metric])||0);
+  });
+  return out;
+}
+
+function topLabels(grouped, limit=8){
+  return Object.keys(grouped).sort((a,b)=>grouped[b]-grouped[a]).slice(0,limit);
+}
+
+function isPendingAccount(row){
+  const estado=String(row.estado||'').toUpperCase();
+  return estado && !estado.includes('PAGADO') && !estado.includes('ANULADA');
+}
+
+async function fetchSheetObjects(sheetName){
+  const url=`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(sheetName)}`;
+  const res=await fetch(url);
+  if(!res.ok) throw new Error(`No se pudo leer la hoja ${sheetName}`);
+  const text=await res.text();
+  const json=JSON.parse(text.substring(text.indexOf('{'),text.lastIndexOf('}')+1));
+  return gvizToAllObjects(json);
+}
+
+function normalizeBusinessData(data){
+  return {
+    pedidos:(data.PEDIDOS||data.pedidos||[]).map(r=>({
+      fecha:r.fecha_pedido||r.fecha||'',
+      fecha_entrega:r.fecha_entrega||'',
+      carguera:r.cliente_carguera||r.carguera||'',
+      tipo_caja:r.tipo_caja||'',
+      cantidad_cajas:Number(r.cantidad_cajas)||0,
+      color:r.color_variedad||r.color||'',
+      medida:r.medida_cm||r.medida||'',
+      follaje:r.follaje||r.Folllaje||'',
+      bonches:Number(r.bonches)||0,
+      tallos:Number(r.tallos)||0,
+      transporte:r.transporte||'',
+      entregado:r.entregado||'',
+      factura:r.factura||'',
+      estado_pedido:r.estado_pedido||'',
+      observaciones:r.observaciones||''
+    })),
+    cuentas:(data.ESTADO_CUENTA||data.cuentas||[]).map(r=>({
+      factura:r.factura||'',
+      cliente:r.cliente||'',
+      ruc:r.ruc_cedula||r.ruc||'',
+      fecha:r.fecha_emision||r.fecha||'',
+      fecha_vencimiento:r.fecha_vencimiento||'',
+      valor:Number(r.valor_factura)||Number(r.valor)||0,
+      estado:String(r.estado||'').toUpperCase(),
+      nota_credito:Number(r.nota_credito)||0,
+      saldo:Number(r.saldo)||0,
+      dias_vencido:Number(r.dias_vencido)||0,
+      observaciones:r.observaciones||''
+    })),
+    proyeccion:(data.PROYECCION_COSECHA||data.proyeccion||[]).map(r=>({
+      semana:Number(r.semana)||0,
+      fechas:r.fechas||[r.fecha_inicio,r.fecha_fin].filter(Boolean).join(' al '),
+      mes:r.mes||'',
+      siembra:r.siembra||'',
+      variedades:r.variedades||'',
+      tallos_brutos:Number(r.tallos_brutos)||0,
+      descarte:Number(r.descarte_estimado)||Number(r.descarte)||0,
+      tallos_vendibles:Number(r.tallos_vendibles)||0,
+      observaciones:r.observaciones||''
+    })),
+    inventario:(data.INVENTARIO||data.inventario||[]).map(r=>({
+      fecha:r.fecha_corte||r.fecha||'',
+      color:r.color_variedad||r.color||'',
+      variedad:r.variedad||r.color_variedad||r.color||'',
+      medida:r.medida_cm||r.medida||'',
+      follaje:r.follaje||'',
+      bonches:Number(r.bonches)||0,
+      tallos:Number(r.saldo_tallos)||Number(r.tallos)||0,
+      tallos_producidos:Number(r.tallos_producidos)||0,
+      tallos_pedidos:Number(r.tallos_pedidos)||0,
+      saldo_tallos:Number(r.saldo_tallos)||0,
+      ubicacion:r.ubicacion||'',
+      estado:r.estado_stock||r.estado||'',
+      observaciones:r.observaciones||''
+    })),
+    procesamiento_personal:(data.PROCESAMIENTO_PERSONAL||data.procesamiento_personal||[]).map(r=>({
+      fecha:r.fecha||'',
+      semana:Number(r.semana)||0,
+      mes:r.mes||'',
+      variedad:r.variedad||'',
+      siembra:r.siembra||'',
+      cama:r.cama||'',
+      persona:r.persona||'',
+      tamano_cm:r.tamano_cm||r.medida_cm||r.tamano||'',
+      bunches_procesados:Number(r.bunches_procesados)||0,
+      tallos_estimados:Number(r.tallos_estimados)||((Number(r.bunches_procesados)||0)*10),
+      tipo_trabajo:r.tipo_trabajo||'',
+      observaciones:r.observaciones||''
+    }))
+  };
+}
+
+async function loadBusinessFromSheets(){
+  if(!window.ALTITUD_LOCAL_DATA || !window.ALTITUD_LOCAL_DATA.datos_web){
+    try{
+      await new Promise((resolve,reject)=>{
+        const script=document.createElement('script');
+        script.src='data/local-data.js?ts='+Date.now();
+        script.onload=resolve;
+        script.onerror=reject;
+        document.head.appendChild(script);
+      });
+      businessData=window.ALTITUD_LOCAL_DATA || businessData;
+    }catch(err){}
+  }
+  const sheetNames=['PEDIDOS','ESTADO_CUENTA','PROYECCION_COSECHA','INVENTARIO','PROCESAMIENTO_PERSONAL'];
+  const next={};
+  await Promise.all(sheetNames.map(async name=>{
+    try{ next[name]=await fetchSheetObjects(name); }
+    catch(err){ next[name]=[]; }
+  }));
+  const normalizedFromSheets=normalizeBusinessData(next);
+  const hasValidSheetData=normalizedFromSheets.pedidos.some(r=>r.tallos||r.carguera||r.fecha) ||
+    normalizedFromSheets.cuentas.some(r=>r.valor||r.factura||r.cliente) ||
+    normalizedFromSheets.proyeccion.some(r=>r.tallos_vendibles||r.semana) ||
+    normalizedFromSheets.inventario.some(r=>r.tallos||r.color) ||
+    normalizedFromSheets.procesamiento_personal.some(r=>r.persona||r.bunches_procesados);
+  if(hasValidSheetData){
+    businessData={...businessData,...normalizedFromSheets};
+  }else{
+    businessData={...businessData,...normalizeBusinessData(businessData)};
+  }
+}
+
+function renderBusinessDashboard(){
+  const pedidos=localRows('pedidos');
+  const cuentas=localRows('cuentas');
+  const proyeccion=localRows('proyeccion');
+  const inventario=localRows('inventario');
+  const pendientes=cuentas.filter(isPendingAccount);
+
+  document.getElementById('bTallosPedidos').textContent=fmtInt(sumRows(pedidos,'tallos'));
+  document.getElementById('bCajasPedidos').textContent=fmtInt(sumRows(pedidos,'cantidad_cajas'));
+  document.getElementById('bCartera').textContent=fmtMoney(pendientes.reduce((s,r)=>s+(Number(r.saldo)||Number(r.valor)||0),0));
+  document.getElementById('bProyeccion').textContent=fmtInt(sumRows(proyeccion,'tallos_vendibles'));
+  document.getElementById('bInventario').textContent=fmtInt(inventario.reduce((s,r)=>s+Math.max(Number(r.saldo_tallos)||Number(r.tallos)||0,0),0));
+
+  const byCarguera=groupSum(pedidos,'carguera','tallos');
+  const cargueras=topLabels(byCarguera,8);
+  makeChart('chartPedidosCarguera','bar',{labels:cargueras,datasets:[{label:'Tallos',data:cargueras.map(k=>byCarguera[k]),backgroundColor:'#2f6b4d',borderRadius:8}]},{plugins:{legend:{display:false}}});
+
+  const byEstado=groupSum(cuentas,'estado','valor');
+  const estados=topLabels(byEstado,6);
+  makeChart('chartCuentasEstado','doughnut',{labels:estados,datasets:[{data:estados.map(k=>byEstado[k]),backgroundColor:['#23623b','#b7924a','#b33a3a','#6ea085','#c9831d','#153e2c'],borderWidth:0}]});
+
+  const semanas=proyeccion.map(r=>`S${r.semana}`);
+  makeChart('chartProyeccion','line',{labels:semanas,datasets:[{label:'Vendibles',data:proyeccion.map(r=>r.tallos_vendibles),borderColor:'#2f6b4d',backgroundColor:'rgba(47,107,77,.12)',tension:.25},{label:'Descarte',data:proyeccion.map(r=>r.descarte),borderColor:'#b33a3a',backgroundColor:'rgba(179,58,58,.10)',tension:.25}]});
+
+  document.getElementById('ordersBody').innerHTML=pedidos.slice().reverse().slice(0,12).map(r=>`<tr><td>${parseDate(r.fecha)}</td><td>${r.carguera||''}</td><td>${r.color||''}</td><td>${r.medida||''}</td><td>${fmtInt(r.cantidad_cajas)}</td><td>${fmtInt(r.tallos)}</td><td>${r.factura||''}</td></tr>`).join('');
+  document.getElementById('accountsBody').innerHTML=pendientes.slice(0,12).map(r=>`<tr><td>${r.factura||''}</td><td>${r.cliente||''}</td><td>${parseDate(r.fecha)}</td><td>${fmtMoney(Number(r.saldo)||Number(r.valor)||0)}</td><td>${r.estado||''}</td></tr>`).join('') || `<tr><td colspan="5">No hay cuentas pendientes registradas.</td></tr>`;
+  renderStaffDashboard(localRows('procesamiento_personal'));
+}
+
+function renderStaffDashboard(rows){
+  const active=rows.filter(r=>r.persona && (r.bunches_procesados || r.tallos_estimados));
+  const byPerson=groupSum(active,'persona','bunches_procesados');
+  const people=topLabels(byPerson,8);
+  makeChart('chartPersonal','bar',{labels:people,datasets:[{label:'Bunches',data:people.map(p=>byPerson[p]),backgroundColor:'#6ea085',borderRadius:8}]},{plugins:{legend:{display:false}}});
+  const visible=(active.length?active:rows.filter(r=>r.persona)).slice().reverse().slice(0,12);
+  document.getElementById('staffBody').innerHTML=visible.map(r=>`<tr><td>${parseDate(r.fecha)}</td><td>${r.persona||''}</td><td>${r.tipo_trabajo||''}</td><td>${r.variedad||''}</td><td>${r.tamano_cm||''}</td><td>${r.bunches_procesados?fmtInt(r.bunches_procesados):''}</td><td>${r.tallos_estimados?fmtInt(r.tallos_estimados):''}</td></tr>`).join('') || `<tr><td colspan="7">La hoja PROCESAMIENTO_PERSONAL estÃƒÂ¡ lista. Agrega una fila por cada trabajo real: persona, variedad, tamaÃƒÂ±o y bunches procesados.</td></tr>`;
+}
+
+function demoRows(){
+  return normalizeRows([
+    {fecha:'2026-06-01',semana:23,mes:'Junio',mes_num:6,variedad:'Freedom',siembra:'S-01',cama:'A12',tallos_solicitados:12000,tallos_cosechados:11680,cumplimiento_pct:.973,tallos_70:3100,tallos_60:4200,tallos_55:2300,tallos_50:1450,nacional:420,basura:210,descarte_pct:.018,ingreso_total:5120,estado_cumplimiento:'OK',estado_descarte:'OK'},
+    {fecha:'2026-06-03',semana:23,mes:'Junio',mes_num:6,variedad:'Mondial',siembra:'S-02',cama:'B07',tallos_solicitados:9000,tallos_cosechados:8120,cumplimiento_pct:.902,tallos_70:1900,tallos_60:2800,tallos_55:1700,tallos_50:980,nacional:470,basura:270,descarte_pct:.033,ingreso_total:3660,estado_cumplimiento:'BAJO',estado_descarte:'OK'},
+    {fecha:'2026-06-08',semana:24,mes:'Junio',mes_num:6,variedad:'Explorer',siembra:'S-01',cama:'C03',tallos_solicitados:10500,tallos_cosechados:10940,cumplimiento_pct:1.042,tallos_70:3600,tallos_60:3300,tallos_55:2100,tallos_50:1220,nacional:520,basura:200,descarte_pct:.018,ingreso_total:5485,estado_cumplimiento:'OK',estado_descarte:'OK'},
+    {fecha:'2026-06-10',semana:24,mes:'Junio',mes_num:6,variedad:'Vendela',siembra:'S-03',cama:'D15',tallos_solicitados:7600,tallos_cosechados:6820,cumplimiento_pct:.897,tallos_70:1450,tallos_60:2200,tallos_55:1650,tallos_50:870,nacional:340,basura:310,descarte_pct:.045,ingreso_total:3020,estado_cumplimiento:'BAJO',estado_descarte:'OK'}
+  ]);
+}
+
+function localProductionRows(){
+  const rows=(businessData && Array.isArray(businessData.datos_web)) ? businessData.datos_web : [];
+  return rows.length ? normalizeRows(rows) : demoRows();
+}
+
+function initializeFiltersAndControls(){
+  fillSelect('fSemana',unique(rawData.map(r=>r.semana)));
+  fillSelect('fMes',unique(rawData.map(r=>r.mes)));
+  fillSelect('fVariedad',unique(rawData.map(r=>r.variedad)));
+  fillSelect('fSiembra',unique(rawData.map(r=>r.siembra)));
+  bindControls();
+}
+
+async function load(){
+  try{
+    const res=await fetch(DATA_URL);
+    if(!res.ok) throw new Error('No se pudo leer Google Sheets. Verifica que el documento estÃ© compartido como lector para cualquier persona con el enlace.');
+    const text=await res.text();
+    const json=JSON.parse(text.substring(text.indexOf('{'),text.lastIndexOf('}')+1));
+    rawData=normalizeRows(gvizToObjects(json));
+    if(!rawData.length) throw new Error('La hoja DATOS_WEB no tiene registros visibles o no conserva los nombres de columnas esperados.');
+    initializeFiltersAndControls();
+    document.getElementById('status').textContent=`Conectado Â· ${rawData.length} registros`;
+    render();
+  }catch(err){
+    const box=document.getElementById('errorBox');box.style.display='block';box.textContent=err.message;
+    rawData=localProductionRows();
+    initializeFiltersAndControls();
+    document.getElementById('status').textContent=rawData.length>4?'Respaldo local':'Modo demo';
+    render();
+  }
+}
+loadBusinessFromSheets().finally(()=>{
+  renderBusinessDashboard();
+  load();
+});
+</script>
+</body>
+</html>
+
+

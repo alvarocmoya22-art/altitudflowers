@@ -1,0 +1,112 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Altitud Flowers | Estado de Cuenta</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/estilos.css?v=20260621-modern" />
+  <script src="data/local-data.js?v=20260616-postcosecha"></script>
+  <script src="js/config.js?v=20260622-stock-core"></script>
+  <script src="js/permisos.js?v=20260622-cliente-stock"></script>
+  <script src="js/nav.js?v=20260622-roles-kpis"></script>
+  <script src="js/estado-cuenta.js?v=20260621-estado-cuenta" defer></script>
+</head>
+<body data-module="estado-cuenta">
+  <div class="shell">
+    <aside class="sidebar">
+      <div class="brand">Altitud Flowers</div>
+      <div class="brand-sub">Finanzas y cartera</div>
+      <nav class="nav">
+        <a href="index.html">Panel gerencial</a>
+        <a href="produccion.html">Produccion campo</a>
+        <a href="poscosecha.html">Poscosecha</a><a href="rendimiento-procesadoras.html">Rendimiento</a>
+        <a href="cuarto-frio.html">Cuarto frio</a>
+        <a href="vendedores.html">Vendedores</a>
+        <a class="active" href="estado-cuenta.html">Estado de Cuenta</a>
+        <a href="comparativo-proyeccion.html">Comparativo ProyecciÃ³n</a>
+        <a href="clientes.html">Clientes</a>
+        <a href="reportes.html">Reportes</a>
+        <a href="configuracion.html">Configuracion</a>
+      </nav>
+      <div class="source">Facturas, abonos, pagos e ingresos reales.</div>
+    </aside>
+    <main class="main">
+      <div class="topbar">
+        <div>
+          <h1>Estado de Cuenta</h1>
+          <div class="subtitle">Control de facturas emitidas, cobros, saldos y PDFs de respaldo</div>
+        </div>
+        <div class="actions">
+          <button class="btn" id="refreshBtn" type="button">Actualizar</button>
+          <div class="status" id="status">Cargando...</div>
+        </div>
+      </div>
+
+      <section class="kpis">
+        <div class="card kpi"><div class="label">Total facturado</div><div class="value" id="kFacturado">-</div><div class="note">Facturas emitidas</div></div>
+        <div class="card kpi"><div class="label">Total cobrado</div><div class="value" id="kCobrado">-</div><div class="note">Ingresos recibidos</div></div>
+        <div class="card kpi"><div class="label">Saldo pendiente</div><div class="value" id="kPendiente">-</div><div class="note">Por cobrar</div></div>
+        <div class="card kpi"><div class="label">Facturas vencidas</div><div class="value" id="kVencidas">-</div><div class="note">Con saldo pendiente</div></div>
+      </section>
+
+      <form class="card panel form-grid" id="facturaForm">
+        <h3>Registro de factura</h3>
+        <div class="field"><label for="factCliente">Cliente</label><input id="factCliente" required></div>
+        <div class="field"><label for="factFecha">Fecha</label><input id="factFecha" type="date" required></div>
+        <div class="field"><label for="factNumero">Numero de factura</label><input id="factNumero" required></div>
+        <div class="field"><label for="factConcepto">Concepto</label><select id="factConcepto"><option>Ventas de flor</option><option>Facturas emitidas</option><option>Otros ingresos</option></select></div>
+        <div class="field"><label for="factValor">Valor total</label><input id="factValor" type="number" min="0" step="0.01" required></div>
+        <div class="field"><label for="factVence">Fecha de vencimiento</label><input id="factVence" type="date"></div>
+        <div class="field wide"><label for="factPdf">PDF de factura</label><input id="factPdf" type="file" accept="application/pdf"></div>
+        <div class="field wide"><label for="factObs">Observacion</label><input id="factObs"></div>
+        <div class="total-box"><span>Saldo pendiente</span><span id="factSaldo">-</span></div>
+        <div class="total-box"><span>Estado</span><span id="factEstado">PENDIENTE</span></div>
+        <div class="full actions" style="justify-content:space-between">
+          <span class="message" id="factMsg">El PDF se guardara en Drive cuando la URL de Apps Script este configurada.</span>
+          <button class="btn primary" type="submit">Guardar factura</button>
+        </div>
+      </form>
+
+      <form class="card panel form-grid" id="pagoForm">
+        <h3>Registro de pago o abono</h3>
+        <div class="field"><label for="pagoTipo">Tipo</label><select id="pagoTipo"><option value="ABONO">Abono</option><option value="PAGO_TOTAL">Pago total</option><option value="OTRO_INGRESO">Otro ingreso</option></select></div>
+        <div class="field"><label for="pagoCliente">Cliente</label><input id="pagoCliente" required></div>
+        <div class="field"><label for="pagoFactura">Numero de factura</label><input id="pagoFactura"></div>
+        <div class="field"><label for="pagoValor">Valor pagado</label><input id="pagoValor" type="number" min="0" step="0.01" required></div>
+        <div class="field"><label for="pagoFecha">Fecha de pago</label><input id="pagoFecha" type="date" required></div>
+        <div class="field"><label for="pagoForma">Forma de pago</label><select id="pagoForma"><option>Transferencia</option><option>Efectivo</option><option>Cheque</option><option>Tarjeta</option><option>Otro</option></select></div>
+        <div class="field"><label for="pagoVendedor">Vendedor</label><input id="pagoVendedor"></div>
+        <div class="field wide"><label for="pagoObs">Observacion</label><input id="pagoObs"></div>
+        <div class="total-box"><span>Saldo posterior</span><span id="pagoSaldo">-</span></div>
+        <div class="total-box"><span>Estado posterior</span><span id="pagoEstado">-</span></div>
+        <div class="full actions" style="justify-content:space-between">
+          <span class="message" id="pagoMsg">Los pagos alimentan INGRESOS, PAGOS_CLIENTES y ESTADO_CUENTA.</span>
+          <button class="btn primary" type="submit">Guardar pago</button>
+        </div>
+      </form>
+
+      <section class="card panel">
+        <h3>Tabla de estado de cuenta</h3>
+        <div class="filters">
+          <div class="field"><label for="clienteFiltro">Cliente</label><input id="clienteFiltro" placeholder="Filtrar cliente"></div>
+          <div class="field"><label for="estadoFiltro">Estado</label><select id="estadoFiltro"><option value="">Todos</option><option>PENDIENTE</option><option>ABONADO</option><option>PAGADO</option><option>VENCIDO</option></select></div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Cliente</th><th>Numero factura</th><th>Valor factura</th><th>Valor pagado</th><th>Saldo pendiente</th><th>Estado</th><th>Link PDF</th></tr></thead>
+            <tbody id="estadoBody"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </div>
+</body>
+</html>
+
+
+
+
+

@@ -1,0 +1,20 @@
+fecha_corte,variedad,medida_cm,tallos_producidos,tallos_pedidos,saldo_tallos,bonches_disponibles,estado_stock,origen,observaciones
+2026-06-08,GREEN,50 CM,930.0,4800.0,-3870.0,0.0,FALTANTE,Postcosecha - Pedidos,Inventario calculado por variedad y medida
+2026-06-08,GREEN,55 CM,18130.0,12730.0,5400.0,540.0,DISPONIBLE,Postcosecha - Pedidos,Inventario calculado por variedad y medida
+2026-06-08,GREEN,60 CM,13370.0,29670.0,-16300.0,0.0,FALTANTE,Postcosecha - Pedidos,Inventario calculado por variedad y medida
+2026-06-08,GREEN,70 CM,11720.0,24660.0,-12940.0,0.0,FALTANTE,Postcosecha - Pedidos,Inventario calculado por variedad y medida
+2026-06-08,GREEN,NACIONAL,15280.0,0.0,15280.0,1528.0,DISPONIBLE,Postcosecha - Pedidos,Inventario calculado por variedad y medida
+2026-06-08,PEACH,50 CM,9340.0,17970.0,-8630.0,0.0,FALTANTE,Postcosecha - Pedidos,Inventario calculado por variedad y medida
+2026-06-08,PEACH,55 CM,6550.0,16180.0,-9630.0,0.0,FALTANTE,Postcosecha - Pedidos,Inventario calculado por variedad y medida
+2026-06-08,PEACH,60 CM,7960.0,29580.0,-21620.0,0.0,FALTANTE,Postcosecha - Pedidos,Inventario calculado por variedad y medida
+2026-06-08,PEACH,70 CM,6330.0,16670.0,-10340.0,0.0,FALTANTE,Postcosecha - Pedidos,Inventario calculado por variedad y medida
+2026-06-08,PEACH,NACIONAL,10345.0,0.0,10345.0,1034.5,DISPONIBLE,Postcosecha - Pedidos,Inventario calculado por variedad y medida
+2026-06-08,RED,50 CM,300.0,8560.0,-8260.0,0.0,FALTANTE,Postcosecha - Pedidos,Inventario calculado por variedad y medida
+2026-06-08,RED,55 CM,1050.0,8170.0,-7120.0,0.0,FALTANTE,Postcosecha - Pedidos,Inventario calculado por variedad y medida
+2026-06-08,RED,60 CM,2890.0,20060.0,-17170.0,0.0,FALTANTE,Postcosecha - Pedidos,Inventario calculado por variedad y medida
+2026-06-08,RED,70 CM,4970.0,23980.0,-19010.0,0.0,FALTANTE,Postcosecha - Pedidos,Inventario calculado por variedad y medida
+2026-06-08,RED,NACIONAL,640.0,0.0,640.0,64.0,DISPONIBLE,Postcosecha - Pedidos,Inventario calculado por variedad y medida
+2026-06-08,SIN VARIEDAD,55 CM,7490.0,0.0,7490.0,749.0,DISPONIBLE,Postcosecha - Pedidos,Inventario calculado por variedad y medida
+2026-06-08,SIN VARIEDAD,60 CM,2300.0,0.0,2300.0,230.0,DISPONIBLE,Postcosecha - Pedidos,Inventario calculado por variedad y medida
+2026-06-08,SIN VARIEDAD,70 CM,3250.0,0.0,3250.0,325.0,DISPONIBLE,Postcosecha - Pedidos,Inventario calculado por variedad y medida
+2026-06-08,SIN VARIEDAD,NACIONAL,2240.0,0.0,2240.0,224.0,DISPONIBLE,Postcosecha - Pedidos,Inventario calculado por variedad y medida

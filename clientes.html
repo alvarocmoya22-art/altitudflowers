@@ -1,0 +1,83 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Altitud Flowers | Clientes</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/estilos.css?v=20260621-modern">
+  <script src="js/config.js?v=20260622-stock-core"></script>
+  <script src="js/permisos.js?v=20260622-cliente-stock"></script>
+  <script src="js/nav.js?v=20260622-roles-kpis"></script>
+  <script src="js/clientes.js" defer></script>
+</head>
+<body data-module="clientes" class="module-page module-clients">
+  <div class="shell">
+    <aside class="sidebar">
+      <div class="brand">Altitud Flowers</div>
+      <div class="brand-sub">Clientes</div>
+      <nav class="nav">
+        <a href="index.html">Panel gerencial</a>
+        <a href="produccion.html">Produccion campo</a>
+        <a href="poscosecha.html">Poscosecha</a><a href="rendimiento-procesadoras.html">Rendimiento</a>
+        <a href="cuarto-frio.html">Cuarto frio</a>
+        <a href="vendedores.html">Vendedores</a>
+        <a href="estado-cuenta.html">Estado de Cuenta</a>
+        <a href="comparativo-proyeccion.html">Comparativo Proyeccion</a>
+        <a class="active" href="clientes.html">Clientes</a>
+        <a href="reportes.html">Reportes</a>
+        <a href="configuracion.html">Configuracion</a>
+      </nav>
+      <div class="source">Administracion comercial basica.</div>
+    </aside>
+
+    <main class="main">
+      <section class="module-hero">
+        <div>
+          <div class="module-eyebrow">Clientes</div>
+          <h1>Administracion comercial</h1>
+          <div class="subtitle">Organiza clientes, contactos y condiciones de pago para ventas y estado de cuenta.</div>
+        </div>
+        <div class="status" id="status">Cargando...</div>
+      </section>
+
+      <section class="kpis compact-kpis">
+        <div class="card kpi"><div class="label">Clientes</div><div class="value" id="kClientes">-</div></div>
+        <div class="card kpi"><div class="label">Activos</div><div class="value" id="kActivos">-</div></div>
+      </section>
+
+      <div class="module-layout">
+        <form class="card panel form-grid panel-accent" id="clienteForm">
+          <div class="section-heading full"><div><h3>Nuevo cliente</h3><p>Guarda la informacion basica para ventas, seguimiento y pagos.</p></div></div>
+          <div class="field"><label for="cliente">Cliente</label><input id="cliente" required></div>
+          <div class="field"><label for="contacto">Contacto</label><input id="contacto"></div>
+          <div class="field"><label for="telefono">Telefono</label><input id="telefono"></div>
+          <div class="field"><label for="email">Email</label><input id="email" type="email"></div>
+          <div class="field"><label for="pais">Pais</label><input id="pais"></div>
+          <div class="field"><label for="ciudad">Ciudad</label><input id="ciudad"></div>
+          <div class="field"><label for="condicion">Condicion pago</label><input id="condicion"></div>
+          <div class="field wide"><label for="observaciones">Observaciones</label><input id="observaciones"></div>
+          <div class="full actions" style="justify-content:flex-end"><button class="btn primary" type="submit">Guardar cliente</button></div>
+        </form>
+
+        <section class="card panel">
+          <div class="section-heading"><div><h3>Listado de clientes</h3><p>Base comercial disponible para vendedores y estado de cuenta.</p></div><div class="table-tools"><span class="soft-badge">Activos e historicos</span></div></div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Cliente</th><th>Contacto</th><th>Telefono</th><th>Email</th><th>Pais</th><th>Estado</th><th>Pago</th></tr></thead>
+              <tbody id="clientesBody"></tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+</body>
+</html>
+
+
+
+
+

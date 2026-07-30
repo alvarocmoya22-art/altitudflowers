@@ -1,0 +1,100 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Altitud Flowers | Vendedores</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/estilos.css?v=20260621-modern" />
+  <script src="data/local-data.js?v=20260616-postcosecha"></script>
+  <script src="js/config.js?v=20260622-stock-core"></script>
+  <script src="js/vendedores.js?v=20260706-nacional-stock" defer></script>
+</head>
+<body data-module="vendedores">
+  <section class="login-view" id="loginView">
+    <form class="login-card" id="loginForm">
+      <div class="brand">Altitud Flowers</div>
+      <div class="subtitle">Acceso vendedores</div>
+      <h1>Inventario procesado</h1>
+      <div class="field"><label for="user">Usuario</label><input id="user" autocomplete="username" required></div>
+      <div class="field"><label for="pin">Clave</label><input id="pin" type="password" autocomplete="current-password" required></div>
+      <button class="btn primary" type="submit" style="width:100%;margin-top:18px">Entrar</button>
+      <div class="notice" id="loginError" style="margin-top:13px;color:#8d2929;background:#f9d9d9;border-color:#f2bcbc">Usuario o clave incorrectos.</div>
+    </form>
+  </section>
+  <section class="app" id="appView">
+    <div class="shell">
+      <aside class="sidebar">
+        <div class="brand">Altitud Flowers</div>
+        <div class="brand-sub">Ventana comercial</div>
+        <nav class="nav">
+          <a href="#venta" class="active">Registrar venta</a>
+          <a href="#stock">Cuarto frio</a>
+          <a href="#detalle">Detalle</a>
+        </nav>
+        <div class="source">Solo procesado y stock disponible para venta.</div>
+      </aside>
+      <main class="main">
+        <div class="topbar">
+          <div>
+            <h1>Vendedores</h1>
+            <div class="subtitle">Stock disponible = tallos procesados - tallos vendidos</div>
+          </div>
+          <div class="actions">
+            <button class="btn" id="refreshBtn" type="button">Actualizar</button>
+            <button class="btn" id="logoutBtn" type="button">Salir</button>
+            <div class="status" id="status">Cargando...</div>
+          </div>
+        </div>
+        <form class="card panel form-grid" id="saleForm">
+          <h3 id="venta">Registrar venta</h3>
+          <div class="field"><label for="saleVendedor">Vendedor</label><input id="saleVendedor" required></div>
+          <div class="field"><label for="saleCliente">Cliente</label><input id="saleCliente" required></div>
+          <div class="field"><label for="saleVariedad">Variedad</label><select id="saleVariedad" required></select></div>
+          <div class="field"><label for="saleMedida">Medida</label><select id="saleMedida" required></select></div>
+          <div class="field"><label for="saleTipo">Tipo</label><select id="saleTipo"><option value="COMERCIAL">Comercial</option><option value="NACIONAL">Nacional</option></select></div>
+          <div class="field"><label for="saleBunches">Bunches</label><input id="saleBunches" type="number" min="0" step="1"></div>
+          <div class="field"><label for="saleTallos">Tallos</label><input id="saleTallos" type="number" min="1" step="1" required></div>
+          <div class="field"><label for="salePrecio">Precio unitario</label><input id="salePrecio" type="number" min="0" step="0.01"></div>
+          <div class="field wide"><label for="saleObs">Observaciones</label><input id="saleObs"></div>
+          <div class="total-box"><span>Disponible</span><span id="saleDisponible">-</span></div>
+          <div class="total-box"><span>Total venta</span><span id="saleTotal">$0,00</span></div>
+          <div class="full actions" style="justify-content:space-between">
+            <span class="message" id="saleMessage">Listo para registrar una venta.</span>
+            <button class="btn primary" type="submit">Guardar venta</button>
+          </div>
+        </form>
+        <section class="kpis">
+          <div class="card kpi"><div class="label">Stock</div><div class="value" id="kStock">-</div><div class="note">Cuarto frio</div></div>
+          <div class="card kpi"><div class="label">Vendido</div><div class="value" id="kVendido">-</div><div class="note">Tallos vendidos</div></div>
+          <div class="card kpi"><div class="label">Ingresos</div><div class="value" id="kIngresos">-</div><div class="note">Ventas registradas</div></div>
+          <div class="card kpi"><div class="label">Variedades</div><div class="value" id="kVariedades">-</div><div class="note">Con stock</div></div>
+        </section>
+        <section class="card panel" id="stock">
+          <h3>Stock en cuarto frio</h3>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Variedad</th><th>Medida</th><th>Procesado util</th><th>Vendido</th><th>Stock disponible</th><th>Estado</th></tr></thead>
+              <tbody id="availabilityBody"></tbody>
+            </table>
+          </div>
+        </section>
+        <section class="card panel" id="detalle">
+          <h3>Ventas registradas</h3>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Fecha</th><th>Vendedor</th><th>Cliente</th><th>Variedad</th><th>Medida</th><th>Tallos</th><th>Total</th><th>Estado</th><th>Accion</th></tr></thead>
+              <tbody id="salesBody"></tbody>
+            </table>
+          </div>
+        </section>
+
+      </main>
+    </div>
+  </section>
+</body>
+</html>
+
+

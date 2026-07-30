@@ -1,0 +1,92 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Altitud Flowers | Poscosecha</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/estilos.css?v=20260622-poscosecha">
+  <script src="data/local-data.js?v=20260616-postcosecha"></script>
+  <script src="js/config.js?v=20260622-stock-core"></script>
+  <script src="js/permisos.js?v=20260622-cliente-stock"></script>
+  <script src="js/nav.js?v=20260622-roles-kpis"></script>
+  <script src="js/poscosecha.js?v=20260628-edit-detalle" defer></script>
+</head>
+<body data-module="poscosecha" class="module-page module-postharvest">
+  <div class="shell">
+    <aside class="sidebar">
+      <div class="brand">Altitud Flowers</div>
+      <div class="brand-sub">Poscosecha</div>
+      <nav class="nav">
+        <a href="index.html">Panel gerencial</a>
+        <a href="produccion.html">Produccion campo</a>
+        <a class="active" href="poscosecha.html">Poscosecha</a><a href="rendimiento-procesadoras.html">Rendimiento</a>
+        <a href="cuarto-frio.html">Cuarto frio</a>
+        <a href="vendedores.html">Vendedores</a>
+        <a href="estado-cuenta.html">Estado de Cuenta</a>
+        <a href="comparativo-proyeccion.html">Comparativo Proyeccion</a>
+        <a href="clientes.html">Clientes</a>
+        <a href="reportes.html">Reportes</a>
+        <a href="configuracion.html">Configuracion</a>
+      </nav>
+      <div class="source">Clasificacion de tallos procesados.</div>
+    </aside>
+
+    <main class="main">
+      <section class="module-hero">
+        <div>
+          <div class="module-eyebrow">Poscosecha</div>
+          <h1>Procesamiento diario</h1>
+          <div class="subtitle">Registra tallos por medida, nacional y descarte para alimentar cuarto frio y ventas.</div>
+        </div>
+        <div class="status" id="status">Cargando...</div>
+      </section>
+
+      <section class="kpis">
+        <div class="card kpi"><div class="label">Procesados</div><div class="value" id="kProcesados">-</div></div>
+        <div class="card kpi"><div class="label">Utiles</div><div class="value" id="kUtil">-</div></div>
+        <div class="card kpi"><div class="label">Basura</div><div class="value" id="kBasura">-</div></div>
+        <div class="card kpi"><div class="label">Registros</div><div class="value" id="kRegistros">-</div></div>
+      </section>
+
+      <div class="module-layout postharvest-layout">
+        <form class="card panel form-grid panel-accent postharvest-form" id="posForm">
+          <div class="section-heading full"><div><h3>Nuevo procesamiento</h3><p>Completa las medidas procesadas. El total se calcula automaticamente.</p></div></div>
+          <div class="field"><label for="fecha">Fecha</label><input id="fecha" type="date" required></div>
+          <div class="field"><label for="semana">Semana</label><input id="semana" type="number" min="1" max="53" readonly></div>
+          <div class="field"><label for="variedad">Variedad</label><select id="variedad" required></select></div>
+          <div class="field"><label for="responsable">Procesadora</label><select id="responsable" required></select></div>
+          <div class="field"><label for="t70">70 cm</label><input id="t70" type="number" min="0"></div>
+          <div class="field"><label for="t60">60 cm</label><input id="t60" type="number" min="0"></div>
+          <div class="field"><label for="t55">55 cm</label><input id="t55" type="number" min="0"></div>
+          <div class="field"><label for="t50">50 cm</label><input id="t50" type="number" min="0"></div>
+          <div class="field"><label for="nacional">Nacional</label><input id="nacional" type="number" min="0"></div>
+          <div class="field"><label for="basura">Basura</label><input id="basura" type="number" min="0"></div>
+          <div class="field"><label for="minutos">Minutos trabajados</label><input id="minutos" type="number" min="0" placeholder="Para rendimiento"></div>
+          <div class="total-box"><span>Total procesado</span><span id="totalProcesado">0</span></div>
+          <div class="input-row-note">Cada registro alimenta cuarto frio, reportes y rendimiento. Los minutos permiten calcular tallos por hora.</div>
+          <div class="field wide"><label for="observaciones">Observaciones</label><input id="observaciones"></div>
+          <div class="full actions" style="justify-content:flex-end"><button class="btn primary" type="submit">Guardar poscosecha</button></div>
+        </form>
+
+        <section class="card panel postharvest-table-card">
+          <div class="section-heading"><div><h3>Detalle procesado</h3><p>Historial operativo por fecha, variedad y medida.</p></div></div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Fecha</th><th>Semana</th><th>Variedad</th><th>Procesado</th><th>70</th><th>60</th><th>55</th><th>50</th><th>Nacional</th><th>Basura</th><th>Accion</th></tr></thead>
+              <tbody id="poscosechaBody"></tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+</body>
+</html>
+
+
+
+
+

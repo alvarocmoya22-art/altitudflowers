@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Altitud Flowers | Cuarto Frio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/estilos.css?v=20260701-cold-report">
+  <script src="data/local-data.js?v=20260616-postcosecha"></script>
+  <script src="js/config.js?v=20260622-stock-core"></script>
+  <script src="js/permisos.js?v=20260622-cliente-stock"></script>
+  <script src="js/nav.js?v=20260622-roles-kpis"></script>
+  <script src="js/cuarto-frio.js?v=20260701-print-report" defer></script>
+</head>
+<body data-module="cuarto-frio" class="module-page module-cold-room">
+  <div class="shell">
+    <aside class="sidebar">
+      <div class="brand">Altitud Flowers</div>
+      <div class="brand-sub">Cuarto frio</div>
+      <nav class="nav"></nav>
+      <div class="source">Stock disponible = procesado util - vendido.</div>
+    </aside>
+
+    <main class="main">
+      <section class="module-hero">
+        <div>
+          <div class="module-eyebrow">Cuarto frio</div>
+          <h1>Disponibilidad real</h1>
+          <div class="subtitle">Inventario por variedad y medida, cruzando poscosecha contra ventas.</div>
+        </div>
+        <div class="actions">
+          <button class="btn" id="printCommercialReportBtn" type="button">PDF sin Nacional</button>
+          <button class="btn primary" id="printColdReportBtn" type="button">Imprimir reporte</button>
+          <div class="status" id="status">Cargando...</div>
+        </div>
+      </section>
+
+      <section class="print-report" id="coldPrintReport" aria-label="Reporte imprimible de cuarto frio"></section>
+
+      <section class="kpis cold-room-kpis">
+        <div class="card kpi"><div class="label">Procesado util</div><div class="value" id="kProcesado">-</div></div>
+        <div class="card kpi"><div class="label">Vendido</div><div class="value" id="kVendido">-</div></div>
+        <div class="card kpi"><div class="label">Stock disponible</div><div class="value" id="kStock">-</div></div>
+        <div class="card kpi"><div class="label">Variedades disponibles</div><div class="value" id="kVariedades">-</div></div>
+        <div class="card kpi"><div class="label">Agotadas</div><div class="value" id="kAgotadas">-</div></div>
+        <div class="card kpi"><div class="label">Bajo stock</div><div class="value" id="kBajoStock">-</div></div>
+      </section>
+
+      <section class="card panel filters-panel">
+        <div class="section-heading"><div><h3>Filtros de consulta</h3><p>Filtra disponibilidad por fecha, semana, variedad, medida y estado.</p></div><button class="btn" id="clearColdFilters" type="button">Limpiar filtros</button></div>
+        <div class="form-grid dashboard-filters">
+          <div class="field"><label for="filterDesde">Fecha desde</label><input id="filterDesde" type="date"></div>
+          <div class="field"><label for="filterHasta">Fecha hasta</label><input id="filterHasta" type="date"></div>
+          <div class="field"><label for="filterSemana">Semana</label><input id="filterSemana" type="number" min="1" max="53"></div>
+          <div class="field"><label for="filterMes">Mes</label><select id="filterMes"></select></div>
+          <div class="field"><label for="filterVariedad">Variedad</label><select id="filterVariedad"></select></div>
+          <div class="field"><label for="filterMedida">Medida</label><select id="filterMedida"></select></div>
+          <div class="field"><label for="filterEstado">Estado</label><select id="filterEstado"></select></div>
+          <label class="checkline"><input id="filterDisponibles" type="checkbox"> Solo disponibles</label>
+          <label class="checkline"><input id="filterBajo" type="checkbox"> Solo bajo stock</label>
+          <label class="checkline"><input id="filterAgotados" type="checkbox"> Solo agotados</label>
+        </div>
+      </section>
+
+      <section class="card panel" id="alertasStockPanel">
+        <div class="section-heading"><div><h3>Alertas de stock</h3><p>Bajo stock, agotados e inconsistencias entre poscosecha y ventas.</p></div></div>
+        <div class="alerts-list" id="stockAlertsBody"></div>
+      </section>
+
+      <section class="card panel">
+        <div class="section-heading"><div><h3>Disponibilidad consolidada por variedad</h3><p>Resumen total por variedad.</p></div></div>
+        <div class="table-wrap"><table><thead><tr><th>Variedad</th><th>Procesado util</th><th>Vendido</th><th>Stock disponible</th><th>% vendido</th><th>Estado</th></tr></thead><tbody id="stockVariedadBody"></tbody></table></div>
+      </section>
+
+      <section class="card panel">
+        <div class="section-heading"><div><h3>Disponibilidad por variedad y medida</h3><p>Tabla principal para validar ventas. El cruce se hace por variedad + medida.</p></div></div>
+        <div class="table-wrap"><table><thead><tr><th>Variedad</th><th>Medida</th><th>Procesado util</th><th>Vendido</th><th>Stock disponible</th><th>% vendido</th><th>Estado</th></tr></thead><tbody id="stockMedidaBody"></tbody></table></div>
+      </section>
+
+      <section class="card panel">
+        <div class="section-heading"><div><h3>Detalle operativo por fecha</h3><p>Lectura por fecha, semana, variedad y medida.</p></div></div>
+        <div class="table-wrap"><table><thead><tr><th>Fecha</th><th>Semana</th><th>Variedad</th><th>Medida</th><th>Procesado</th><th>Vendido</th><th>Stock</th><th>Observacion</th></tr></thead><tbody id="stockDetalleBody"></tbody></table></div>
+      </section>
+    </main>
+  </div>
+</body>
+</html>

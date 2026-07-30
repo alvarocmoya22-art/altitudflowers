@@ -1,0 +1,131 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Altitud Flowers | Rendimiento Procesadoras</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/estilos.css?v=20260623-rendimiento-edicion">
+  <script src="js/config.js?v=20260622-stock-core"></script>
+  <script src="js/permisos.js?v=20260622-cliente-stock"></script>
+  <script src="js/nav.js?v=20260622-roles-kpis"></script>
+  <script src="js/rendimiento-procesadoras.js?v=20260623-rendimiento-edicion" defer></script>
+</head>
+<body data-module="rendimiento" class="module-page module-performance">
+  <div class="shell">
+    <aside class="sidebar">
+      <div class="brand">Altitud Flowers</div>
+      <div class="brand-sub">Rendimiento procesadoras</div>
+      <nav class="nav">
+        <a href="index.html">Panel gerencial</a>
+        <a href="produccion.html">Produccion campo</a>
+        <a href="poscosecha.html">Poscosecha</a>
+        <a class="active" href="rendimiento-procesadoras.html">Rendimiento</a>
+        <a href="cuarto-frio.html">Cuarto frio</a>
+        <a href="vendedores.html">Vendedores</a>
+        <a href="estado-cuenta.html">Estado de Cuenta</a>
+        <a href="comparativo-proyeccion.html">Comparativo Proyeccion</a>
+        <a href="clientes.html">Clientes</a>
+        <a href="reportes.html">Reportes</a>
+        <a href="configuracion.html">Configuracion</a>
+      </nav>
+      <div class="source">Rendimiento por persona y dia.</div>
+    </aside>
+
+    <main class="main">
+      <section class="module-hero">
+        <div>
+          <div class="module-eyebrow">Rendimiento</div>
+          <h1>Rendimiento de procesadoras</h1>
+          <div class="subtitle">Analiza el trabajo diario generado desde los registros de poscosecha.</div>
+        </div>
+        <div class="status" id="status">Cargando...</div>
+      </section>
+
+      <section class="kpis">
+        <div class="card kpi"><div class="label">Tallos procesados</div><div class="value" id="kTallos">-</div></div>
+        <div class="card kpi"><div class="label">Bunches</div><div class="value" id="kBunches">-</div></div>
+        <div class="card kpi"><div class="label">Promedio tallos/hora</div><div class="value" id="kPromedio">-</div></div>
+        <div class="card kpi"><div class="label">Mejor rendimiento</div><div class="value" id="kMejor">-</div></div>
+      </section>
+
+      <div class="module-layout performance-layout">
+        <section class="card panel panel-accent performance-info-card">
+          <div class="section-heading">
+            <div>
+              <h3>Consulta de rendimiento</h3>
+              <p>Los registros se leen directamente desde Poscosecha. Los minutos permiten calcular las horas y los tallos por hora.</p>
+            </div>
+          </div>
+        </section>
+
+        <section class="card panel performance-table-card">
+          <div class="section-heading">
+            <div>
+              <h3>Resumen por persona</h3>
+              <p>Comparacion acumulada para identificar rendimiento diario y total.</p>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Procesadora</th><th>Registros</th><th>Bunches</th><th>Tallos</th><th>Minutos</th><th>Horas</th><th>Tallos/hora</th></tr></thead>
+              <tbody id="resumenBody"></tbody>
+            </table>
+          </div>
+
+          <div class="section-heading performance-detail-heading">
+            <div>
+              <h3>Detalle registrado</h3>
+              <p>Ultimos registros guardados o cargados desde Sheets.</p>
+            </div>
+          </div>
+          <div class="table-wrap performance-detail-wrap">
+            <table>
+              <thead><tr><th>Fecha</th><th>Semana</th><th>Procesadora</th><th>Variedad</th><th>Medida</th><th>Bunches</th><th>Tallos</th><th>Minutos</th><th>Horas</th><th>Tallos/hora</th><th>Estado</th><th>Accion</th></tr></thead>
+              <tbody id="rendimientoBody"></tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <dialog id="editRendimientoDialog" class="edit-dialog">
+    <form id="editRendimientoForm" method="dialog">
+      <div class="edit-dialog-head">
+        <div>
+          <div class="module-eyebrow">Correccion</div>
+          <h2>Editar registro de poscosecha</h2>
+        </div>
+        <button id="closeEditRendimiento" class="icon-button" type="button" aria-label="Cerrar">&times;</button>
+      </div>
+      <input id="editIdPoscosecha" type="hidden">
+      <div class="form-grid edit-performance-grid">
+        <div class="field"><label for="editFecha">Fecha</label><input id="editFecha" type="date" required></div>
+        <div class="field"><label for="editSemana">Semana</label><input id="editSemana" type="number" readonly></div>
+        <div class="field"><label for="editProcesadora">Procesadora</label><select id="editProcesadora" required><option>MARGARITA</option><option>ANGELICA</option><option>CRISTINA</option></select></div>
+        <div class="field"><label for="editVariedad">Variedad</label><select id="editVariedad" required><option>NEW RED</option><option>SPRING PEACH</option><option>GREEN XL</option></select></div>
+        <div class="field"><label for="editT70">70 cm</label><input id="editT70" type="number" min="0"></div>
+        <div class="field"><label for="editT60">60 cm</label><input id="editT60" type="number" min="0"></div>
+        <div class="field"><label for="editT55">55 cm</label><input id="editT55" type="number" min="0"></div>
+        <div class="field"><label for="editT50">50 cm</label><input id="editT50" type="number" min="0"></div>
+        <div class="field"><label for="editNacional">Nacional</label><input id="editNacional" type="number" min="0"></div>
+        <div class="field"><label for="editBasura">Basura</label><input id="editBasura" type="number" min="0"></div>
+        <div class="field"><label for="editMinutos">Minutos trabajados</label><input id="editMinutos" type="number" min="0" required></div>
+        <div class="total-box"><span>Total procesado</span><strong id="editTotalProcesado">0</strong></div>
+        <div class="field full"><label for="editObservaciones">Observaciones</label><textarea id="editObservaciones"></textarea></div>
+      </div>
+      <div class="edit-dialog-actions">
+        <button id="cancelEditRendimiento" class="btn secondary" type="button">Cancelar</button>
+        <button class="btn" type="submit">Guardar cambios</button>
+      </div>
+    </form>
+  </dialog>
+</body>
+</html>
+
+
+
+
