@@ -1112,6 +1112,49 @@ tbody tr:hover td{
 .alert-item strong { color: var(--ink); }
 .alert-item span { color: var(--muted); }
 
+/* Entrada operativa limitada */
+.operation-home{display:grid;gap:28px}
+.operation-grid{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:18px;
+}
+.operation-card{
+  min-height:210px;
+  display:flex;
+  flex-direction:column;
+  justify-content:space-between;
+  gap:18px;
+  padding:24px;
+  border:1px solid var(--border);
+  border-top:5px solid var(--gold);
+  border-radius:22px;
+  background:linear-gradient(145deg,#fff,rgba(246,249,242,.92));
+  box-shadow:var(--shadow);
+  color:var(--text);
+  text-decoration:none;
+  transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease;
+}
+.operation-card:hover{
+  transform:translateY(-3px);
+  border-color:rgba(72,89,5,.28);
+  box-shadow:0 24px 60px rgba(29,44,24,.16);
+}
+.operation-card span{
+  width:46px;
+  height:46px;
+  display:grid;
+  place-items:center;
+  border-radius:50%;
+  background:rgba(72,89,5,.1);
+  color:var(--green-800);
+  font-weight:900;
+}
+.operation-card strong{display:block;font-size:22px;line-height:1.15}
+.operation-card small{display:block;color:var(--muted);font-size:14px;line-height:1.45}
+@media(max-width:1100px){.operation-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:640px){.operation-grid{grid-template-columns:1fr}.operation-card{min-height:170px}}
+
 /* Reporte imprimible de cuarto frio */
 .print-report{display:none}
 .print-report-page{background:#fff;color:#1f2617;font-family:Inter,Arial,sans-serif}
