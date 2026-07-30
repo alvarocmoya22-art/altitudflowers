@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/estilos.css?v=20260729-gerencial-organizado" />
+  <link rel="stylesheet" href="css/estilos.css?v=20260729-gerencial-premium" />
   <script src="data/local-data.js?v=20260616-postcosecha"></script>
   <script src="js/config.js?v=20260622-stock-core"></script>
   <script src="js/permisos.js?v=20260622-cliente-stock"></script>
@@ -24,7 +24,7 @@
     </aside>
 
     <main class="main dashboard-page">
-      <section class="module-hero">
+      <section class="module-hero management-hero">
         <div>
           <div class="module-eyebrow">Panel gerencial</div>
           <h1>Resumen ejecutivo</h1>
@@ -34,6 +34,29 @@
           <div class="status" id="roleStatus">Rol: verificando...</div>
           <div class="status" id="status">Cargando...</div>
         </div>
+      </section>
+
+      <section class="management-shortcuts" data-permission-group="gerencia">
+        <a class="management-shortcut" href="#operacionGerencial">
+          <span>01</span>
+          <strong>Operacion diaria</strong>
+          <small>Campo, poscosecha, rendimiento y stock.</small>
+        </a>
+        <a class="management-shortcut" href="#comercialGerencial">
+          <span>02</span>
+          <strong>Comercial</strong>
+          <small>Ventas, clientes y salida de inventario.</small>
+        </a>
+        <a class="management-shortcut" href="#finanzasGerencial">
+          <span>03</span>
+          <strong>Finanzas</strong>
+          <small>Facturacion, cobros y saldos pendientes.</small>
+        </a>
+        <a class="management-shortcut" href="#controlGerencial">
+          <span>04</span>
+          <strong>Control</strong>
+          <small>Proyeccion, cumplimiento y alertas.</small>
+        </a>
       </section>
 
       <section class="card panel dashboard-filters">
@@ -60,7 +83,7 @@
         <div class="kpis executive-kpis" id="executiveKpis"></div>
       </section>
 
-      <section class="management-band" data-permission-group="operativo">
+      <section class="management-band" id="operacionGerencial" data-permission-group="operativo">
         <div class="section-heading">
           <div><h3>Operacion diaria</h3><p>Campo, poscosecha, rendimiento y disponibilidad.</p></div>
         </div>
@@ -85,7 +108,7 @@
         </div>
       </section>
 
-      <section class="management-band" data-permission-group="ventas">
+      <section class="management-band" id="comercialGerencial" data-permission-group="ventas">
         <div class="section-heading">
           <div><h3>Comercial y finanzas</h3><p>Ventas, facturacion, cobros y saldos por cobrar.</p></div>
         </div>
@@ -96,7 +119,7 @@
           <div class="table-wrap compact-table"><table><thead><tr><th>Detalle</th><th>Valor</th></tr></thead><tbody id="ventasBody"></tbody></table></div>
         </div>
 
-        <div class="card panel" data-permission-group="finanzas">
+        <div class="card panel" id="finanzasGerencial" data-permission-group="finanzas">
           <div class="section-heading"><div><h3>Finanzas</h3><p>Facturacion, cobros y saldos.</p></div></div>
           <div class="mini-kpis" id="finanzasKpis"></div>
           <div class="table-wrap compact-table"><table><thead><tr><th>Estado</th><th>Cantidad</th></tr></thead><tbody id="facturasBody"></tbody></table></div>
@@ -104,7 +127,7 @@
         </div>
       </section>
 
-      <section class="management-band" data-permission-group="gerencia">
+      <section class="management-band" id="controlGerencial" data-permission-group="gerencia">
         <div class="section-heading">
           <div><h3>Planificacion y control</h3><p>Comparativo de proyeccion y alertas para tomar decisiones.</p></div>
         </div>
