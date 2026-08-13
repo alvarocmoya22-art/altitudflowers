@@ -12,7 +12,7 @@
   <script src="js/config.js?v=20260813-auditoria"></script>
   <script src="js/permisos.js?v=20260622-cliente-stock"></script>
   <script src="js/nav.js?v=20260622-roles-kpis"></script>
-  <script src="js/comparativo-proyeccion.js?v=20260813-auditoria" defer></script>
+  <script src="js/comparativo-proyeccion.js?v=20260813-comparativo2" defer></script>
 </head>
 <body data-module="comparativo-proyeccion">
   <div class="shell">
@@ -37,7 +37,7 @@
       <div class="topbar">
         <div>
           <h1>Comparativo Proyeccion</h1>
-          <div class="subtitle">Proyeccion esperada vs produccion/cosecha real por siembra, variedad y semana.</div>
+          <div class="subtitle">Sirve para comparar lo que se esperaba cosechar contra lo que realmente se corto o proceso por semana.</div>
         </div>
         <div class="actions">
           <button class="btn" id="refreshBtn" type="button">Actualizar</button>
@@ -55,6 +55,7 @@
 
       <section class="card panel">
         <h3>Filtros</h3>
+        <p class="subtitle">Usa esta ventana solo cuando exista una proyeccion cargada en PROYECCION_COSECHA. Si no hay proyeccion, el sistema no tiene una meta contra la cual comparar.</p>
         <div class="filters">
           <div class="field"><label for="filterSiembra">Siembra</label><input id="filterSiembra" placeholder="S1, S2..."></div>
           <div class="field"><label for="filterVariedad">Variedad</label><select id="filterVariedad"><option value="">Todas</option></select></div>
@@ -66,6 +67,7 @@
 
       <section class="card panel">
         <h3>Observaciones</h3>
+        <p class="subtitle">Primero debe existir una fila en la tabla comparativa. Luego puedes agregar la causa de la diferencia para esa siembra, variedad y semana.</p>
         <form class="form-grid" id="obsForm">
           <div class="field"><label for="obsSiembra">Siembra</label><input id="obsSiembra"></div>
           <div class="field"><label for="obsVariedad">Variedad</label><select id="obsVariedad"></select></div>

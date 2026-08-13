@@ -161,6 +161,10 @@ async function loadProjectionRows() {
   }
 }
 
+function emptyComparativoMessage() {
+  return 'No hay proyeccion valida. Revisa que PROYECCION_COSECHA tenga semana, siembra, variedades y tallos_vendibles.';
+}
+
 async function loadComparativo() {
   setStatus('Cargando comparativo...');
   try {
@@ -174,8 +178,9 @@ async function loadComparativo() {
         loadSheet(ALTITUD.sheets.produccion).catch(() => []),
         loadSheet(ALTITUD.sheets.poscosecha).catch(() => [])
       ]);
+      const projectionRows = normalizeProjection(projectionRaw);
       comparativoRows = combineComparativo(
-        normalizeProjection(projectionRaw),
+        projectionRows,
         normalizeProduction(productionRaw),
         normalizePostharvest(postRaw)
       );
@@ -184,7 +189,7 @@ async function loadComparativo() {
     renderComparativo();
     setStatus(comparativoRows.length
       ? `Comparativo actualizado - ${fmtInt(comparativoRows.length)} filas`
-      : 'Sin proyeccion valida cargada');
+      : emptyComparativoMessage());
   } catch (err) {
     comparativoRows = [];
     renderComparativo();
@@ -237,7 +242,7 @@ function renderComparativo() {
     row => `${(row.porcentaje_cumplimiento || 0).toFixed(1)}%`,
     row => `<span class="pill ${pillClass(row.estado_resultado)}">${row.estado_resultado}</span>`,
     row => row.observacion || '-'
-  ], 'No hay proyeccion valida para comparar.');
+  ], emptyComparativoMessage());
 }
 
 async function saveComparativo() {
@@ -260,9 +265,18 @@ async function saveComparativo() {
 
 function applyObservation(event) {
   event.preventDefault();
+  if (!comparativoRows.length) {
+    setStatus('No se puede aplicar observacion: primero debe existir una tabla comparativa cargada.');
+    return;
+  }
   const key = rowKey($('obsSiembra').value, $('obsVariedad').value, $('obsSemana').value);
   const cause = text($('obsCausa').value);
   const detail = text($('obsTexto').value);
+  const exists = comparativoRows.some(row => rowKey(row.siembra, row.variedad, row.semana) === key);
+  if (!exists) {
+    setStatus('No encontre esa combinacion de siembra, variedad y semana en la tabla. Verifica esos tres campos.');
+    return;
+  }
   observaciones[key] = detail ? `${cause}: ${detail}` : cause;
   comparativoRows = comparativoRows.map(row => rowKey(row.siembra, row.variedad, row.semana) === key
     ? { ...row, observacion: observaciones[key] }
