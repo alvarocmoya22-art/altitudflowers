@@ -32,7 +32,7 @@ function normalizeEstadoCuenta(rows) {
       observacion: text(row.observacion || row.observaciones),
       url_pdf_factura: text(row.url_pdf_factura)
     };
-  }).filter(row => (row.cliente || /^\d+$/.test(row.numero_factura) || row.tipo_movimiento !== 'FACTURA') && (row.numero_factura || row.valor_factura || row.valor_pagado));
+  }).filter(row => row.cliente && (row.numero_factura || row.valor_factura || row.valor_pagado));
 }
 
 function latestInvoiceMap(rows) {
@@ -55,7 +55,12 @@ function filteredRows() {
 
 function renderEstadoCuenta() {
   const today = todayISO();
-  const invoiceRows = estadoRows.filter(row => row.tipo_movimiento === 'FACTURA' || row.valor_factura);
+  const invoiceMap = new Map();
+  estadoRows.filter(row => row.tipo_movimiento === 'FACTURA' || row.valor_factura).forEach(row => {
+    const key = row.numero_factura || `${row.cliente}|${row.fecha}|${row.valor_factura}`;
+    if (!invoiceMap.has(key)) invoiceMap.set(key, row);
+  });
+  const invoiceRows = Array.from(invoiceMap.values());
   const totalFacturado = invoiceRows.reduce((sum, row) => sum + row.valor_factura, 0);
   const totalPendiente = invoiceRows.reduce((sum, row) => sum + row.saldo_pendiente, 0);
   const totalCobrado = Math.max(0, totalFacturado - totalPendiente);

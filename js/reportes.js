@@ -15,7 +15,7 @@ async function initReportes(){
   renderRows($('reportBody'),[
     {indicador:'Tallos procesados',valor:fmtInt(totalProcesado),nota:'Base POSCOSECHA / DATOS_WEB'},
     {indicador:'Aprovechamiento',valor:fmtPct(totalProcesado?totalUtil/totalProcesado:0),nota:'Comercial + nacional'},
-    {indicador:'Descarte',valor:fmtPct(totalProcesado?totalBasura/totalProcesado:0),nota:'Basura sobre procesado'},
+    {indicador:'Descarte',valor:fmtPct(totalProcesado?totalBasura/totalProcesado:0),nota:'Descarte sobre procesado'},
     {indicador:'Tallos vendidos',valor:fmtInt(totalVendido),nota:'VENTAS_VENDEDORES'},
     {indicador:'Stock disponible',valor:fmtInt(stockTotal),nota:'Procesado - vendido'},
     {indicador:'Ingresos registrados',valor:fmtMoney(ingresos),nota:'Precio x tallos'}

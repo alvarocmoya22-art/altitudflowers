@@ -1372,3 +1372,58 @@ tbody tr:hover td{
   .print-section table{page-break-inside:auto}
   .print-section tr{page-break-inside:avoid;page-break-after:auto}
 }
+
+/* Ajuste final responsive: menu y formularios sin superposicion */
+html,body{max-width:100%;overflow-x:hidden}
+.shell,.main,.module-layout,.grid-2,.grid-3,.kpis,.compact-kpis,.form-grid,.filters,.table-wrap{min-width:0}
+.sidebar{min-width:0}
+.brand{
+  min-width:0;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.sidebar .nav{
+  min-width:0;
+  max-width:100%;
+  scrollbar-width:thin;
+}
+.sidebar .nav a{
+  max-width:100%;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+input,select,textarea,button{max-width:100%}
+.table-wrap table{min-width:max-content}
+@media(max-width:1180px){
+  .sidebar{
+    display:grid;
+    grid-template-columns:1fr;
+    gap:12px;
+    align-items:start;
+  }
+  .brand,.brand-sub,.source{max-width:100%}
+  .sidebar .nav{
+    display:flex;
+    flex-wrap:nowrap;
+    overflow-x:auto;
+    gap:8px;
+    padding-bottom:4px;
+  }
+  .sidebar .nav a{
+    flex:0 0 auto;
+    min-width:max-content;
+    padding:10px 14px;
+  }
+}
+@media(max-width:760px){
+  .main{padding:18px 14px}
+  .module-hero{padding:24px 18px}
+  .module-hero h1{font-size:34px;line-height:1.05}
+  .card.panel{padding:18px}
+  .form-grid{grid-template-columns:1fr!important}
+  .field,.wide,.full{grid-column:1/-1!important}
+  .actions{justify-content:stretch!important}
+  .actions .btn,.btn.primary{width:100%}
+  .kpis,.compact-kpis,.grid-2,.grid-3,.module-layout,.postharvest-layout{grid-template-columns:1fr!important}
+}

@@ -31,7 +31,7 @@ async function buildDashboard(){
   const comparativo=filterRows(comparativoRaw,filters,'comparativo');
   const stockData=calculateColdRoomStock(posRaw,ventasRaw,filters);
   const stock=stockData.porVariedad;
-  const rendimientoBase=rendimientoRaw.length?rendimientoRaw:posRaw.map(row=>({fecha:row.fecha,procesadora:row.responsable,tallos_procesados:row.tallos_procesados,minutos_trabajados:row.minutos_trabajados,horas_trabajadas:asNumber(row.minutos_trabajados)/60}));
+  const rendimientoBase=poscosecha.map(row=>({fecha:row.fecha,semana:row.semana,procesadora:row.responsable,tallos_procesados:row.comercial+row.nacional,minutos_trabajados:row.minutos_trabajados,horas_trabajadas:asNumber(row.minutos_trabajados)/60,estado:row.estado,variedad:row.variedad}));
   const rendimiento=filterRows(rendimientoBase,filters,'rendimiento').map(row=>{const tallos=asNumber(row.tallos_procesados||row.tallos),horas=asNumber(row.horas_trabajadas)||asNumber(row.minutos_trabajados)/60;return{...row,tallos,horas,tallosHora:horas?tallos/horas:0,procesadora:text(row.procesadora||row.responsable).toUpperCase()}});
   const rendimientoConTiempo=rendimiento.filter(row=>row.horas>0);
   const rendimientoHoras=rendimientoConTiempo.reduce((a,r)=>a+r.horas,0);
@@ -73,7 +73,7 @@ async function buildDashboard(){
     kpiCard('Total cobrado',fmtMoney(cobrado),'Ingresos reales','finanzas'),
     kpiCard('Saldo pendiente',fmtMoney(pendiente),'Por cobrar','finanzas'),
     kpiCard('Cumplimiento proyeccion',fmtPct(cumplimiento),'Real / proyectado','gerencia'),
-    kpiCard('Porcentaje descarte',fmtPct(descartePct),'Basura / procesado','operativo'),
+    kpiCard('Porcentaje descarte',fmtPct(descartePct),'Descarte / procesado','operativo'),
     kpiCard('Facturas vencidas',fmtInt(vencidas),'Requiere cobro','finanzas')
   ].join('');
   const topVar=topEntry(groupSum(produccion,r=>normalizeVariety(r.variedad),r=>asNumber(r.tallos_cortados)));
@@ -81,7 +81,7 @@ async function buildDashboard(){
   const topResponsable=topEntry(groupSum(produccion,r=>text(r.responsable),r=>asNumber(r.tallos_cortados)));
   renderMini('produccionKpis',[['Mes',fmtInt(prodMonth)],['Variedad lider',topVar[0]],['Siembra lider',topSiembra[0]],['Responsable',topResponsable[0]]]);
   renderRows($('produccionBody'),[['Cortados mes',fmtInt(prodMonth)],['Cumplimiento',fmtPct(cumplimiento)],['Diferencia proyeccion',fmtInt(compReal-compProy)]],[r=>r[0],r=>r[1]]);
-  renderMini('poscosechaKpis',[['Procesados',fmtInt(posTotal)],['Utiles',fmtInt(utilTotal)],['Basura',fmtInt(basuraTotal)],['Rendimiento',fmtPct(posTotal?utilTotal/posTotal:0)]]);
+  renderMini('poscosechaKpis',[['Procesados',fmtInt(posTotal)],['Comercial',fmtInt(poscosecha.reduce((a,r)=>a+r.comercial,0))],['Nacional',fmtInt(poscosecha.reduce((a,r)=>a+r.nacional,0))],['Descarte',fmtInt(basuraTotal)]]);
   renderRows($('medidasBody'),[['70 cm',poscosecha.reduce((a,r)=>a+r.tallos_70,0)],['60 cm',poscosecha.reduce((a,r)=>a+r.tallos_60,0)],['55 cm',poscosecha.reduce((a,r)=>a+r.tallos_55,0)],['50 cm',poscosecha.reduce((a,r)=>a+r.tallos_50,0)],['Nacional',poscosecha.reduce((a,r)=>a+r.nacional,0)]],[r=>r[0],r=>fmtInt(r[1])]);
   renderMini('inventarioKpis',[['Disponible',fmtInt(stockTotal)],['Stock nacional',fmtInt(stockData.porVariedadMedida.filter(r=>r.medida==='NACIONAL').reduce((a,r)=>a+r.stockDisponible,0))],['Bajo stock',fmtInt(stockData.resumen.variedadesBajoStock)],['Agotadas',fmtInt(stockData.resumen.variedadesAgotadas)]]);
   renderRows($('stockBody'),stockData.porVariedadMedida.slice(0,8),[r=>`${r.variedad} ${medidaLabel(r.medida)}`,r=>fmtInt(r.stockDisponible),r=>r.estado==='AGOTADO'||r.estado==='INCONSISTENCIA'?'<span class="pill bad">'+r.estado+'</span>':r.estado==='BAJO STOCK'?'<span class="pill warn">BAJO STOCK</span>':'<span class="pill ok">DISPONIBLE</span>']);
