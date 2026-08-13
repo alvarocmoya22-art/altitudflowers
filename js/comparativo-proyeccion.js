@@ -245,6 +245,14 @@ function renderComparativo() {
   ], emptyComparativoMessage());
 }
 
+function setObservationFeedback(message, type = 'warn') {
+  const el = $('obsFeedback');
+  if (!el) return;
+  el.style.display = message ? 'block' : 'none';
+  el.className = `full notice ${type}`;
+  el.textContent = message;
+}
+
 async function saveComparativo() {
   if (!comparativoRows.length) {
     setStatus('No hay comparativo para guardar.');
@@ -265,8 +273,11 @@ async function saveComparativo() {
 
 function applyObservation(event) {
   event.preventDefault();
+  setObservationFeedback('');
   if (!comparativoRows.length) {
-    setStatus('No se puede aplicar observacion: primero debe existir una tabla comparativa cargada.');
+    const message = 'No se puede aplicar observacion: primero debe existir una tabla comparativa cargada.';
+    setObservationFeedback(message);
+    setStatus(message);
     return;
   }
   const key = rowKey($('obsSiembra').value, $('obsVariedad').value, $('obsSemana').value);
@@ -274,7 +285,9 @@ function applyObservation(event) {
   const detail = text($('obsTexto').value);
   const exists = comparativoRows.some(row => rowKey(row.siembra, row.variedad, row.semana) === key);
   if (!exists) {
-    setStatus('No encontre esa combinacion de siembra, variedad y semana en la tabla. Verifica esos tres campos.');
+    const message = `No existe una fila para ${text($('obsSiembra').value).toUpperCase()} / ${text($('obsVariedad').value)} / semana ${asNumber($('obsSemana').value)}. Usa una combinacion que este visible en la tabla.`;
+    setObservationFeedback(message);
+    setStatus(message);
     return;
   }
   observaciones[key] = detail ? `${cause}: ${detail}` : cause;
@@ -282,6 +295,7 @@ function applyObservation(event) {
     ? { ...row, observacion: observaciones[key] }
     : row);
   renderComparativo();
+  setObservationFeedback('Observacion aplicada en la tabla visible.', 'ok');
   setStatus('Observacion aplicada en pantalla.');
 }
 

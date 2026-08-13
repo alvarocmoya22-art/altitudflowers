@@ -12,7 +12,7 @@
   <script src="js/config.js?v=20260813-auditoria"></script>
   <script src="js/permisos.js?v=20260622-cliente-stock"></script>
   <script src="js/nav.js?v=20260622-roles-kpis"></script>
-  <script src="js/comparativo-proyeccion.js?v=20260813-comparativo2" defer></script>
+  <script src="js/comparativo-proyeccion.js?v=20260813-comparativo3" defer></script>
 </head>
 <body data-module="comparativo-proyeccion">
   <div class="shell">
@@ -74,6 +74,7 @@
           <div class="field"><label for="obsSemana">Semana</label><input id="obsSemana" type="number" min="1" max="53"></div>
           <div class="field"><label for="obsCausa">Causa</label><select id="obsCausa"><option>menor brotacion</option><option>tallos cortos</option><option>descarte alto</option><option>enfermedad</option><option>baja productividad</option><option>error de proyeccion</option><option>cosecha incompleta</option></select></div>
           <div class="field wide"><label for="obsTexto">Observacion adicional</label><input id="obsTexto"></div>
+          <div class="full notice" id="obsFeedback"></div>
           <div class="full actions" style="justify-content:flex-end"><button class="btn primary" type="submit">Aplicar observacion</button></div>
         </form>
       </section>
