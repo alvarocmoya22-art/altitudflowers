@@ -2,15 +2,22 @@ let comparativoRows = [];
 let observaciones = {};
 
 function splitVarieties(value) {
-  return text(value).split(/\s*\+\s*|\s*,\s*|\s+y\s+/i).map(normalizeVariety).filter(Boolean);
+  return text(value)
+    .split(/\s*\+\s*|\s*,\s*|\s+y\s+/i)
+    .map(normalizeVariety)
+    .filter(variedad => ALTITUD.variedades.includes(variedad));
 }
 
 function rowKey(siembra, variedad, semana) {
-  return `${text(siembra).toUpperCase()}|${normalizeVariety(variedad)}|${asNumber(semana)}`;
+  return `${text(siembra || 'SIN SIEMBRA').toUpperCase()}|${normalizeVariety(variedad)}|${asNumber(semana)}`;
+}
+
+function fallbackKey(variedad, semana) {
+  return `*|${normalizeVariety(variedad)}|${asNumber(semana)}`;
 }
 
 function statusFromPercent(percent, diff) {
-  if (diff > 0) return 'SUPERA PROYECCIÓN';
+  if (diff > 0) return 'SUPERA PROYECCION';
   if (percent >= 95) return 'CUMPLE';
   if (percent >= 80) return 'BAJO LO ESPERADO';
   return 'DEFICIENTE';
@@ -22,22 +29,29 @@ function pillClass(estado) {
   return '';
 }
 
+function looksLikeGuideRow(row) {
+  const joined = Object.values(row || {}).map(text).join(' ').toUpperCase();
+  return /GUIA|GUÍA|SUBIR|GOOGLE SHEETS|INSTRUCCION|PLANTILLA/.test(joined);
+}
+
 function normalizeProjection(rows) {
   const out = [];
   (rows || []).forEach(row => {
-    const semana = asNumber(row.semana || row.semana_proyectada);
-    const siembra = text(row.siembra || row.bloque || row.lote || 'SIN SIEMBRA').toUpperCase();
+    if (looksLikeGuideRow(row)) return;
+    const semana = asNumber(row.semana || row.semana_proyectada || row.week);
+    const rawSiembra = text(row.siembra || row.bloque || row.lote);
     const variedades = splitVarieties(row.variedad || row.variedades);
     const projected = asNumber(row.tallos_proyectados || row.tallos_vendibles || row.tallos_brutos || row.tallos);
     if (!semana || !projected || !variedades.length) return;
+
     const perVariety = projected / variedades.length;
     variedades.forEach(variedad => out.push({
-      siembra,
+      siembra: rawSiembra ? rawSiembra.toUpperCase() : 'SIN SIEMBRA',
       variedad,
       semana_proyectada: semana,
-      fecha_cosecha: text(row.fecha_cosecha || row.fecha || row.fecha_inicio),
+      fecha_cosecha: normalizarFecha(row.fecha_cosecha || row.fecha || row.fecha_inicio),
       tallos_proyectados: perVariety,
-      observacion: text(row.observaciones)
+      observacion: text(row.observaciones || row.observacion)
     }));
   });
   return out;
@@ -48,13 +62,15 @@ function normalizeProduction(rows) {
   (rows || []).forEach(row => {
     const siembra = text(row.siembra || row.bloque || row.lote || 'SIN SIEMBRA').toUpperCase();
     const variedad = normalizeVariety(row.variedad);
-    const semana = asNumber(row.semana);
+    const fecha = normalizarFecha(row.fecha);
+    const semana = asNumber(row.semana) || isoWeekAltitud(fecha);
     const tallos = asNumber(row.tallos_cortados || row.tallos_cosechados || row.tallos);
-    if (!variedad || !semana || !tallos) return;
+    const estado = text(row.estado || 'REGISTRADO').toUpperCase();
+    if (!ALTITUD.variedades.includes(variedad) || !semana || !tallos || estado === 'ELIMINADO' || estado === 'ANULADO') return;
     const key = rowKey(siembra, variedad, semana);
-    grouped[key] ||= { siembra, variedad, semana, fecha_cosecha: text(row.fecha), tallos_cosechados_reales: 0 };
+    grouped[key] ||= { siembra, variedad, semana, fecha_cosecha: fecha, tallos_cosechados_reales: 0 };
     grouped[key].tallos_cosechados_reales += tallos;
-    if (text(row.fecha)) grouped[key].fecha_cosecha = text(row.fecha);
+    if (fecha) grouped[key].fecha_cosecha = fecha;
   });
   return grouped;
 }
@@ -63,10 +79,17 @@ function normalizePostharvest(rows) {
   const grouped = {};
   normalizeProcessed(rows).forEach(row => {
     const siembra = text(row.siembra || row.bloque || row.lote || 'SIN SIEMBRA').toUpperCase();
-    const semana = asNumber(row.semana);
-    if (!semana) return;
+    const semana = asNumber(row.semana) || isoWeekAltitud(row.fecha);
+    if (!semana || !ALTITUD.variedades.includes(row.variedad)) return;
     const key = rowKey(siembra, row.variedad, semana);
-    grouped[key] ||= { siembra, variedad: row.variedad, semana, fecha_cosecha: row.fecha, tallos_procesados_reales: 0, descarte_real: 0 };
+    grouped[key] ||= {
+      siembra,
+      variedad: row.variedad,
+      semana,
+      fecha_cosecha: row.fecha,
+      tallos_procesados_reales: 0,
+      descarte_real: 0
+    };
     grouped[key].tallos_procesados_reales += row.util || row.tallos_procesados;
     grouped[key].descarte_real += row.basura;
     if (row.fecha) grouped[key].fecha_cosecha = row.fecha;
@@ -74,17 +97,37 @@ function normalizePostharvest(rows) {
   return grouped;
 }
 
+function findRealRow(map, siembra, variedad, semana) {
+  return map[rowKey(siembra, variedad, semana)] || map[fallbackKey(variedad, semana)] || {};
+}
+
+function addFallbacks(map) {
+  Object.values(map).forEach(row => {
+    const key = fallbackKey(row.variedad, row.semana);
+    if (!map[key]) map[key] = { ...row, siembra: 'SIN SIEMBRA' };
+    else {
+      map[key].tallos_cosechados_reales = asNumber(map[key].tallos_cosechados_reales) + asNumber(row.tallos_cosechados_reales);
+      map[key].tallos_procesados_reales = asNumber(map[key].tallos_procesados_reales) + asNumber(row.tallos_procesados_reales);
+      map[key].descarte_real = asNumber(map[key].descarte_real) + asNumber(row.descarte_real);
+    }
+  });
+  return map;
+}
+
 function combineComparativo(projections, productionMap, postMap) {
-  const rows = projections.map((projection, index) => {
-    const key = rowKey(projection.siembra, projection.variedad, projection.semana_proyectada);
-    const prod = productionMap[key] || {};
-    const post = postMap[key] || {};
+  if (!projections.length) return [];
+  const production = addFallbacks({ ...productionMap });
+  const postharvest = addFallbacks({ ...postMap });
+
+  return projections.map((projection, index) => {
+    const prod = findRealRow(production, projection.siembra, projection.variedad, projection.semana_proyectada);
+    const post = findRealRow(postharvest, projection.siembra, projection.variedad, projection.semana_proyectada);
     const cosechado = asNumber(prod.tallos_cosechados_reales);
     const procesado = asNumber(post.tallos_procesados_reales);
     const reales = cosechado || procesado;
     const diferencia = reales - projection.tallos_proyectados;
     const cumplimiento = projection.tallos_proyectados ? (reales / projection.tallos_proyectados) * 100 : 0;
-    const estado = statusFromPercent(cumplimiento, diferencia);
+    const key = rowKey(projection.siembra, projection.variedad, projection.semana_proyectada);
     return {
       id_comparativo: `CMP-${Date.now()}-${index}`,
       fecha_registro: new Date().toISOString(),
@@ -100,20 +143,22 @@ function combineComparativo(projections, productionMap, postMap) {
       tallos_reales: reales,
       diferencia_tallos: diferencia,
       porcentaje_cumplimiento: cumplimiento,
-      estado_resultado: estado,
+      estado_resultado: statusFromPercent(cumplimiento, diferencia),
       observacion: observaciones[key] || projection.observacion || ''
     };
-  });
-  return rows.sort((a, b) => a.semana - b.semana || a.siembra.localeCompare(b.siembra) || a.variedad.localeCompare(b.variedad));
+  }).sort((a, b) => a.semana - b.semana || a.siembra.localeCompare(b.siembra) || a.variedad.localeCompare(b.variedad));
 }
 
 async function loadProjectionRows() {
   try {
     const rows = await loadSheet(ALTITUD.sheets.proyeccion);
     if (normalizeProjection(rows).length) return rows;
+  } catch (err) {}
+  try {
+    return await loadSheet(ALTITUD.sheets.proyeccionCosecha);
   } catch (err) {
+    return [];
   }
-  return await loadSheet(ALTITUD.sheets.proyeccionCosecha);
 }
 
 async function loadComparativo() {
@@ -129,15 +174,21 @@ async function loadComparativo() {
         loadSheet(ALTITUD.sheets.produccion).catch(() => []),
         loadSheet(ALTITUD.sheets.poscosecha).catch(() => [])
       ]);
-      comparativoRows = combineComparativo(normalizeProjection(projectionRaw), normalizeProduction(productionRaw), normalizePostharvest(postRaw));
+      comparativoRows = combineComparativo(
+        normalizeProjection(projectionRaw),
+        normalizeProduction(productionRaw),
+        normalizePostharvest(postRaw)
+      );
     }
     populateFilters();
     renderComparativo();
-    setStatus(`Comparativo actualizado - ${fmtInt(comparativoRows.length)} filas`);
+    setStatus(comparativoRows.length
+      ? `Comparativo actualizado - ${fmtInt(comparativoRows.length)} filas`
+      : 'Sin proyeccion valida cargada');
   } catch (err) {
     comparativoRows = [];
     renderComparativo();
-    setStatus('No se pudo leer la proyección.');
+    setStatus('No se pudo leer la proyeccion.');
   }
 }
 
@@ -147,20 +198,20 @@ function filteredComparativo() {
   const semana = asNumber($('filterSemana').value);
   const fecha = text($('filterFecha').value);
   const estado = text($('filterEstado').value);
-  return comparativoRows.filter(row => {
-    return (!siembra || row.siembra.includes(siembra))
-      && (!variedad || row.variedad === variedad)
-      && (!semana || row.semana === semana)
-      && (!fecha || row.fecha_cosecha === fecha)
-      && (!estado || row.estado_resultado === estado);
-  });
+  return comparativoRows.filter(row => (!siembra || row.siembra.includes(siembra))
+    && (!variedad || row.variedad === variedad)
+    && (!semana || row.semana === semana)
+    && (!fecha || row.fecha_cosecha === fecha)
+    && (!estado || row.estado_resultado === estado));
 }
 
 function populateFilters() {
   const varieties = [...new Set(comparativoRows.map(row => row.variedad).filter(Boolean))].sort();
   const options = ['<option value="">Todas</option>', ...varieties.map(v => `<option value="${v}">${v}</option>`)].join('');
   $('filterVariedad').innerHTML = options;
-  $('obsVariedad').innerHTML = varieties.map(v => `<option value="${v}">${v}</option>`).join('');
+  $('obsVariedad').innerHTML = varieties.length
+    ? varieties.map(v => `<option value="${v}">${v}</option>`).join('')
+    : ALTITUD.variedades.map(v => `<option value="${v}">${v}</option>`).join('');
 }
 
 function renderComparativo() {
@@ -186,12 +237,16 @@ function renderComparativo() {
     row => `${(row.porcentaje_cumplimiento || 0).toFixed(1)}%`,
     row => `<span class="pill ${pillClass(row.estado_resultado)}">${row.estado_resultado}</span>`,
     row => row.observacion || '-'
-  ]);
+  ], 'No hay proyeccion valida para comparar.');
 }
 
 async function saveComparativo() {
+  if (!comparativoRows.length) {
+    setStatus('No hay comparativo para guardar.');
+    return;
+  }
   if (!ALTITUD.comparativoProyeccionUrl) {
-    setStatus('Falta publicar Apps Script comparativo para guardar el análisis.');
+    setStatus('Falta publicar Apps Script comparativo para guardar el analisis.');
     return;
   }
   await fetch(ALTITUD.comparativoProyeccionUrl, {
@@ -200,7 +255,7 @@ async function saveComparativo() {
     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
     body: JSON.stringify({ action: 'guardarComparativo', rows: comparativoRows })
   });
-  setStatus('Análisis enviado a COMPARATIVO_PROYECCION.');
+  setStatus('Analisis enviado a COMPARATIVO_PROYECCION.');
 }
 
 function applyObservation(event) {
@@ -209,9 +264,11 @@ function applyObservation(event) {
   const cause = text($('obsCausa').value);
   const detail = text($('obsTexto').value);
   observaciones[key] = detail ? `${cause}: ${detail}` : cause;
-  comparativoRows = comparativoRows.map(row => rowKey(row.siembra, row.variedad, row.semana) === key ? { ...row, observacion: observaciones[key] } : row);
+  comparativoRows = comparativoRows.map(row => rowKey(row.siembra, row.variedad, row.semana) === key
+    ? { ...row, observacion: observaciones[key] }
+    : row);
   renderComparativo();
-  setStatus('Observación aplicada en pantalla.');
+  setStatus('Observacion aplicada en pantalla.');
 }
 
 document.addEventListener('DOMContentLoaded', () => {

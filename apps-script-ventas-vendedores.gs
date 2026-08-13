@@ -2,7 +2,7 @@ const SPREADSHEET_ID = '1QogpATp_-37gz23PAapTVsNHYNzo3XnnbFxflb0xKYo';
 const HEADERS_BY_SHEET = {
   USUARIOS: ['id_usuario','nombre','correo','rol','estado','fecha_registro'],
   PRODUCCION_CAMPO: ['id_produccion','fecha','semana','siembra','cama','variedad','tallos_cortados','responsable','estado','observaciones','creado_en','origen','lote','turno'],
-  POSCOSECHA: ['id_poscosecha','fecha','semana','variedad','tallos_procesados','tallos_70','tallos_60','tallos_55','tallos_50','nacional','basura','aprovechamiento_pct','descarte_pct','responsable','minutos_trabajados','observaciones','creado_en','origen','estado'],
+  POSCOSECHA: ['id_poscosecha','fecha','semana','variedad','tallos_procesados','tallos_70','tallos_60','tallos_55','tallos_50','nacional','basura','aprovechamiento_pct','descarte_pct','responsable','observaciones','creado_en','origen','estado','minutos_trabajados'],
   RENDIMIENTO_PROCESADORAS: ['id_rendimiento','fecha','semana','procesadora','variedad','medida_cm','bunches','tallos_procesados','horas_trabajadas','tallos_por_hora','bunches_por_hora','observaciones','creado_en','origen','estado','minutos_trabajados'],
   CUARTO_FRIO: ['fecha_corte','variedad','medida_cm','tallos_procesados','tallos_vendidos','stock_disponible','bunches_disponibles','estado_stock','ubicacion','observaciones','actualizado_en','origen'],
   VENTAS_VENDEDORES: ['id_venta','fecha','hora','vendedor','cliente','variedad','medida_cm','tipo','bunches','tallos','precio_unitario','total_venta','estado','observaciones','creado_en','origen'],
@@ -48,11 +48,12 @@ function doPost(e) {
     const role = getRole_(payload.user || {});
     if (!canWrite_(role, sheetName)) throw new Error('Rol sin permiso para escribir en ' + sheetName);
     const sheet = getSheet_(sheetName, headers);
-    const existingRow = findRowById_(sheet, headers, record);
+    const writeHeaders = getWritableHeaders_(sheet, headers);
+    const existingRow = findRowById_(sheet, writeHeaders, record);
     if (existingRow > 1) {
-      sheet.getRange(existingRow, 1, 1, headers.length).setValues([headers.map(header => normalizeValue_(record[header]))]);
+      sheet.getRange(existingRow, 1, 1, writeHeaders.length).setValues([writeHeaders.map(header => normalizeValue_(record[header]))]);
     } else {
-      sheet.appendRow(headers.map(header => normalizeValue_(record[header])));
+      sheet.appendRow(writeHeaders.map(header => normalizeValue_(record[header])));
     }
     if (sheetName === 'POSCOSECHA') {
       sincronizarRendimientoDesdePoscosecha_(record);
@@ -109,7 +110,8 @@ function deleteRecord_(sheetName, idField, idValue, user) {
   const role = getRole_(user || {});
   if (!canWrite_(role, sheetName)) throw new Error('Rol sin permiso para eliminar en ' + sheetName);
   const sheet = getSheet_(sheetName, headers);
-  const idColumn = headers.indexOf(String(idField || '')) + 1;
+  const writeHeaders = getWritableHeaders_(sheet, headers);
+  const idColumn = writeHeaders.indexOf(String(idField || '')) + 1;
   if (idColumn <= 0) throw new Error('Campo ID no encontrado: ' + idField);
   const lastRow = sheet.getLastRow();
   if (lastRow < 2) return { ok: true, deleted: false };
@@ -156,10 +158,11 @@ function sincronizarRendimientoDesdePoscosecha_(record) {
   };
   const headers = HEADERS_BY_SHEET.RENDIMIENTO_PROCESADORAS;
   const sheet = getSheet_('RENDIMIENTO_PROCESADORAS', headers);
-  const existingRow = findRowById_(sheet, headers, rendimiento);
-  const values = headers.map(function(header) { return normalizeValue_(rendimiento[header]); });
+  const writeHeaders = getWritableHeaders_(sheet, headers);
+  const existingRow = findRowById_(sheet, writeHeaders, rendimiento);
+  const values = writeHeaders.map(function(header) { return normalizeValue_(rendimiento[header]); });
   if (existingRow > 1) {
-    sheet.getRange(existingRow, 1, 1, headers.length).setValues([values]);
+    sheet.getRange(existingRow, 1, 1, writeHeaders.length).setValues([values]);
   } else {
     sheet.appendRow(values);
   }
@@ -168,7 +171,8 @@ function sincronizarRendimientoDesdePoscosecha_(record) {
 function eliminarRendimientoDePoscosecha_(idPoscosecha) {
   const headers = HEADERS_BY_SHEET.RENDIMIENTO_PROCESADORAS;
   const sheet = getSheet_('RENDIMIENTO_PROCESADORAS', headers);
-  const idColumn = headers.indexOf('id_rendimiento') + 1;
+  const writeHeaders = getWritableHeaders_(sheet, headers);
+  const idColumn = writeHeaders.indexOf('id_rendimiento') + 1;
   const lastRow = sheet.getLastRow();
   if (lastRow < 2) return;
   const wanted = 'RP-' + String(idPoscosecha || '').trim();
@@ -235,6 +239,27 @@ function getSheet_(sheetName, headers) {
     });
   }
   return sheet;
+}
+
+function getWritableHeaders_(sheet, desiredHeaders) {
+  const lastColumn = Math.max(sheet.getLastColumn(), desiredHeaders.length);
+  let headers = sheet.getRange(1, 1, 1, lastColumn).getValues()[0]
+    .map(function(header) { return String(header || '').trim(); });
+  const hasHeaders = headers.some(function(header) { return header; });
+  if (!hasHeaders) {
+    sheet.getRange(1, 1, 1, desiredHeaders.length).setValues([desiredHeaders]);
+    sheet.setFrozenRows(1);
+    return desiredHeaders.slice();
+  }
+  desiredHeaders.forEach(function(header) {
+    if (headers.indexOf(header) === -1) {
+      sheet.getRange(1, sheet.getLastColumn() + 1).setValue(header);
+    }
+  });
+  headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0]
+    .map(function(header) { return String(header || '').trim(); })
+    .filter(function(header) { return header; });
+  return headers;
 }
 
 function normalizeValue_(value) {

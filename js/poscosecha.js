@@ -29,14 +29,21 @@ function isoWeekPoscosecha(dateText) {
 function normalizePosRows(rows) {
   return normalizeProcessed(rows).map((row, index) => {
     const source = (rows || [])[index] || {};
+    const shiftedMinutes = asNumber(source.minutos_trabajados) || asNumber(source.observaciones);
+    const shiftedStatus = text(source.estado).toUpperCase();
+    const statusFromShift = text(source.minutos_trabajados).toUpperCase();
+    const estado = ['REGISTRADO', 'ELIMINADO', 'ANULADO'].includes(shiftedStatus)
+      ? shiftedStatus
+      : (['REGISTRADO', 'ELIMINADO', 'ANULADO'].includes(statusFromShift) ? statusFromShift : 'REGISTRADO');
+    const observaciones = asNumber(source.observaciones) && statusFromShift ? '' : text(source.observaciones || source.observacion);
     return {
       ...row,
       id_poscosecha: text(source.id_poscosecha),
       responsable: text(source.responsable).toUpperCase(),
-      minutos_trabajados: asNumber(source.minutos_trabajados),
-      observaciones: text(source.observaciones || source.observacion),
-      estado: text(source.estado || 'REGISTRADO').toUpperCase(),
-      creado_en: text(source.creado_en)
+      minutos_trabajados: shiftedMinutes,
+      observaciones,
+      estado,
+      creado_en: text(source.creado_en || source.origen)
     };
   }).filter(row => row.estado !== 'ELIMINADO' && row.estado !== 'ANULADO');
 }
@@ -56,8 +63,8 @@ function dedupePoscosecha(rows) {
 function renderPoscosecha(rows) {
   const normalized = dedupePoscosecha(rows);
   $('kProcesados').textContent = fmtInt(normalized.reduce((a, r) => a + r.tallos_procesados, 0));
-  $('kUtil').textContent = fmtInt(normalized.reduce((a, r) => a + r.util, 0));
-  $('kBasura').textContent = fmtInt(normalized.reduce((a, r) => a + r.basura, 0));
+  $('kUtil').textContent = fmtInt(normalized.reduce((a, r) => a + r.comercial, 0));
+  $('kBasura').textContent = fmtInt(normalized.reduce((a, r) => a + r.nacional, 0));
   $('kRegistros').textContent = fmtInt(normalized.length);
 
   renderRows($('poscosechaBody'), normalized, [

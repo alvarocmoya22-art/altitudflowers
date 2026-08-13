@@ -9,10 +9,10 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/estilos.css?v=20260730-nav-no-overlap">
   <script src="data/local-data.js?v=20260616-postcosecha"></script>
-  <script src="js/config.js?v=20260731-nacional-real-stock"></script>
+  <script src="js/config.js?v=20260813-sinergia"></script>
   <script src="js/permisos.js?v=20260622-cliente-stock"></script>
   <script src="js/nav.js?v=20260622-roles-kpis"></script>
-  <script src="js/poscosecha.js?v=20260628-edit-detalle" defer></script>
+  <script src="js/poscosecha.js?v=20260813-sinergia" defer></script>
 </head>
 <body data-module="poscosecha" class="module-page module-postharvest">
   <div class="shell">
@@ -46,8 +46,8 @@
 
       <section class="kpis">
         <div class="card kpi"><div class="label">Procesados</div><div class="value" id="kProcesados">-</div></div>
-        <div class="card kpi"><div class="label">Utiles</div><div class="value" id="kUtil">-</div></div>
-        <div class="card kpi"><div class="label">Basura</div><div class="value" id="kBasura">-</div></div>
+        <div class="card kpi"><div class="label">Comercial</div><div class="value" id="kUtil">-</div></div>
+        <div class="card kpi"><div class="label">Nacional</div><div class="value" id="kBasura">-</div></div>
         <div class="card kpi"><div class="label">Registros</div><div class="value" id="kRegistros">-</div></div>
       </section>
 
@@ -63,10 +63,10 @@
           <div class="field"><label for="t55">55 cm</label><input id="t55" type="number" min="0"></div>
           <div class="field"><label for="t50">50 cm</label><input id="t50" type="number" min="0"></div>
           <div class="field"><label for="nacional">Nacional</label><input id="nacional" type="number" min="0"></div>
-          <div class="field"><label for="basura">Basura</label><input id="basura" type="number" min="0"></div>
+          <div class="field"><label for="basura">Descarte</label><input id="basura" type="number" min="0"></div>
           <div class="field"><label for="minutos">Minutos trabajados</label><input id="minutos" type="number" min="0" placeholder="Para rendimiento"></div>
           <div class="total-box"><span>Total procesado</span><span id="totalProcesado">0</span></div>
-          <div class="input-row-note">Cada registro alimenta cuarto frio, reportes y rendimiento. Los minutos permiten calcular tallos por hora.</div>
+          <div class="input-row-note">Comercial y nacional alimentan cuarto frio. Descarte queda separado para control interno. Los minutos calculan tallos por hora.</div>
           <div class="field wide"><label for="observaciones">Observaciones</label><input id="observaciones"></div>
           <div class="full actions" style="justify-content:flex-end"><button class="btn primary" type="submit">Guardar poscosecha</button></div>
         </form>
@@ -75,7 +75,7 @@
           <div class="section-heading"><div><h3>Detalle procesado</h3><p>Historial operativo por fecha, variedad y medida.</p></div></div>
           <div class="table-wrap">
             <table>
-              <thead><tr><th>Fecha</th><th>Semana</th><th>Variedad</th><th>Procesado</th><th>70</th><th>60</th><th>55</th><th>50</th><th>Nacional</th><th>Basura</th><th>Accion</th></tr></thead>
+              <thead><tr><th>Fecha</th><th>Semana</th><th>Variedad</th><th>Procesado</th><th>70</th><th>60</th><th>55</th><th>50</th><th>Nacional</th><th>Descarte</th><th>Accion</th></tr></thead>
               <tbody id="poscosechaBody"></tbody>
             </table>
           </div>

@@ -3,22 +3,22 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Altitud Flowers | Comparativo Proyección</title>
+  <title>Altitud Flowers | Comparativo Proyeccion</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/estilos.css?v=20260730-nav-no-overlap" />
   <script src="data/local-data.js?v=20260616-postcosecha"></script>
-  <script src="js/config.js?v=20260731-nacional-real-stock"></script>
+  <script src="js/config.js?v=20260813-sinergia"></script>
   <script src="js/permisos.js?v=20260622-cliente-stock"></script>
   <script src="js/nav.js?v=20260622-roles-kpis"></script>
-  <script src="js/comparativo-proyeccion.js?v=20260621-comparativo3" defer></script>
+  <script src="js/comparativo-proyeccion.js?v=20260813-sinergia" defer></script>
 </head>
 <body data-module="comparativo-proyeccion">
   <div class="shell">
     <aside class="sidebar">
       <div class="brand">Altitud Flowers</div>
-      <div class="brand-sub">Proyección vs cosecha</div>
+      <div class="brand-sub">Proyeccion vs cosecha</div>
       <nav class="nav">
         <a href="index.html">Panel gerencial</a>
         <a href="produccion.html">Produccion campo</a>
@@ -26,22 +26,22 @@
         <a href="cuarto-frio.html">Cuarto frio</a>
         <a href="vendedores.html">Vendedores</a>
         <a href="estado-cuenta.html">Estado de Cuenta</a>
-        <a class="active" href="comparativo-proyeccion.html">Comparativo Proyección</a>
+        <a class="active" href="comparativo-proyeccion.html">Comparativo Proyeccion</a>
         <a href="clientes.html">Clientes</a>
         <a href="reportes.html">Reportes</a>
         <a href="configuracion.html">Configuracion</a>
       </nav>
-      <div class="source">Lee PROYECCION/PROYECCION_COSECHA sin modificarla.</div>
+      <div class="source">Lee PROYECCION o PROYECCION_COSECHA sin modificarla.</div>
     </aside>
     <main class="main">
       <div class="topbar">
         <div>
-          <h1>Comparativo Proyección</h1>
-          <div class="subtitle">Proyección esperada vs producción/cosecha real por siembra, variedad y semana</div>
+          <h1>Comparativo Proyeccion</h1>
+          <div class="subtitle">Proyeccion esperada vs produccion/cosecha real por siembra, variedad y semana.</div>
         </div>
         <div class="actions">
           <button class="btn" id="refreshBtn" type="button">Actualizar</button>
-          <button class="btn primary" id="saveBtn" type="button">Guardar análisis</button>
+          <button class="btn primary" id="saveBtn" type="button">Guardar analisis</button>
           <div class="status" id="status">Cargando...</div>
         </div>
       </div>
@@ -60,7 +60,7 @@
           <div class="field"><label for="filterVariedad">Variedad</label><select id="filterVariedad"><option value="">Todas</option></select></div>
           <div class="field"><label for="filterSemana">Semana</label><input id="filterSemana" type="number" min="1" max="53"></div>
           <div class="field"><label for="filterFecha">Fecha</label><input id="filterFecha" type="date"></div>
-          <div class="field"><label for="filterEstado">Estado</label><select id="filterEstado"><option value="">Todos</option><option>SUPERA PROYECCIÓN</option><option>CUMPLE</option><option>BAJO LO ESPERADO</option><option>DEFICIENTE</option></select></div>
+          <div class="field"><label for="filterEstado">Estado</label><select id="filterEstado"><option value="">Todos</option><option>SUPERA PROYECCION</option><option>CUMPLE</option><option>BAJO LO ESPERADO</option><option>DEFICIENTE</option></select></div>
         </div>
       </section>
 
@@ -70,9 +70,9 @@
           <div class="field"><label for="obsSiembra">Siembra</label><input id="obsSiembra"></div>
           <div class="field"><label for="obsVariedad">Variedad</label><select id="obsVariedad"></select></div>
           <div class="field"><label for="obsSemana">Semana</label><input id="obsSemana" type="number" min="1" max="53"></div>
-          <div class="field"><label for="obsCausa">Causa</label><select id="obsCausa"><option>menor brotación</option><option>tallos cortos</option><option>descarte alto</option><option>enfermedad</option><option>baja productividad</option><option>error de proyección</option><option>cosecha incompleta</option></select></div>
-          <div class="field wide"><label for="obsTexto">Observación adicional</label><input id="obsTexto"></div>
-          <div class="full actions" style="justify-content:flex-end"><button class="btn primary" type="submit">Aplicar observación</button></div>
+          <div class="field"><label for="obsCausa">Causa</label><select id="obsCausa"><option>menor brotacion</option><option>tallos cortos</option><option>descarte alto</option><option>enfermedad</option><option>baja productividad</option><option>error de proyeccion</option><option>cosecha incompleta</option></select></div>
+          <div class="field wide"><label for="obsTexto">Observacion adicional</label><input id="obsTexto"></div>
+          <div class="full actions" style="justify-content:flex-end"><button class="btn primary" type="submit">Aplicar observacion</button></div>
         </form>
       </section>
 
@@ -80,7 +80,7 @@
         <h3>Tabla comparativa</h3>
         <div class="table-wrap">
           <table>
-            <thead><tr><th>Siembra</th><th>Variedad</th><th>Semana</th><th>Fecha cosecha</th><th>Proyectado</th><th>Cosechado real</th><th>Procesado real</th><th>Descarte</th><th>Diferencia</th><th>Cumplimiento</th><th>Estado</th><th>Observación</th></tr></thead>
+            <thead><tr><th>Siembra</th><th>Variedad</th><th>Semana</th><th>Fecha cosecha</th><th>Proyectado</th><th>Cosechado real</th><th>Procesado real</th><th>Descarte</th><th>Diferencia</th><th>Cumplimiento</th><th>Estado</th><th>Observacion</th></tr></thead>
             <tbody id="comparativoBody"></tbody>
           </table>
         </div>
@@ -89,8 +89,3 @@
   </div>
 </body>
 </html>
-
-
-
-
-
