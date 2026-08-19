@@ -1297,7 +1297,10 @@ tbody tr:hover td{
 
 /* Navegacion superior estable: evita que los enlaces se superpongan */
 .sidebar{
-  grid-template-columns:minmax(180px,max-content) minmax(0,1fr) max-content;
+  grid-template-columns:minmax(180px,max-content) minmax(0,1fr);
+}
+.sidebar .brand-sub{
+  display:none;
 }
 .sidebar .nav{
   min-width:0;
