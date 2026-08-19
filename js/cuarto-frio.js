@@ -140,6 +140,124 @@ function buildColdPrintReport(data = coldStockData, filters = coldFilters(), opt
     </div>`;
 }
 
+const COLD_STEMS_PER_BUNCH = 10;
+const COLD_HB_BOX_CAPACITY = {
+  '70': 25,
+  '60': 30,
+  '55': 30,
+  '50': 30
+};
+
+function coldBoxCapacity(medida) {
+  return COLD_HB_BOX_CAPACITY[normalizarMedida(medida)] || 30;
+}
+
+function coldPackingRows(data = coldStockData) {
+  if (!data) return [];
+  return (data.porVariedadMedida || [])
+    .filter(row => normalizarMedida(row.medida) !== 'NACIONAL' && asNumber(row.stockDisponible) > 0)
+    .map(row => {
+      const stockDisponible = Math.max(0, Math.floor(asNumber(row.stockDisponible)));
+      const bunches = Math.floor(stockDisponible / COLD_STEMS_PER_BUNCH);
+      const tallosSueltos = stockDisponible % COLD_STEMS_PER_BUNCH;
+      const bunchesPorCaja = coldBoxCapacity(row.medida);
+      const cajasCompletas = Math.floor(bunches / bunchesPorCaja);
+      const bunchesSueltos = bunches % bunchesPorCaja;
+      return {
+        variedad: row.variedad,
+        medida: normalizarMedida(row.medida),
+        stockDisponible,
+        bunches,
+        tallosSueltos,
+        tipoCaja: 'HB',
+        bunchesPorCaja,
+        cajasCompletas,
+        bunchesSueltos
+      };
+    });
+}
+
+function coldPackingLabel(row) {
+  const cajas = `${fmtInt(row.cajasCompletas)} ${row.cajasCompletas === 1 ? 'caja' : 'cajas'}`;
+  const extras = [];
+  if (row.bunchesSueltos) extras.push(`${fmtInt(row.bunchesSueltos)} b.`);
+  if (row.tallosSueltos) extras.push(`${fmtInt(row.tallosSueltos)} tallos`);
+  return extras.length ? `${cajas} + ${extras.join(' + ')}` : cajas;
+}
+
+function buildColdPackingReport(data = coldStockData) {
+  if (!data) return '';
+  const rows = coldPackingRows(data);
+  const now = new Date();
+  const generatedAt = now.toLocaleString('es-EC', { dateStyle: 'medium', timeStyle: 'short' });
+  const totals = rows.reduce((acc, row) => {
+    acc.stock += row.stockDisponible;
+    acc.bunches += row.bunches;
+    acc.cajas += row.cajasCompletas;
+    acc.bunchesSueltos += row.bunchesSueltos;
+    acc.tallosSueltos += row.tallosSueltos;
+    return acc;
+  }, { stock: 0, bunches: 0, cajas: 0, bunchesSueltos: 0, tallosSueltos: 0 });
+  const totalExtras = [];
+  if (totals.bunchesSueltos) totalExtras.push(`${fmtInt(totals.bunchesSueltos)} b. sueltos`);
+  if (totals.tallosSueltos) totalExtras.push(`${fmtInt(totals.tallosSueltos)} tallos sueltos`);
+  const totalBoxes = `${fmtInt(totals.cajas)} cajas completas${totalExtras.length ? ` · ${totalExtras.join(' · ')}` : ''}`;
+
+  return `
+    <div class="print-report-page packing-report-page">
+      <header class="packing-report-head">
+        <div class="print-brand">Altitud Flowers</div>
+        <div class="print-meta">
+          <strong>Generado</strong>
+          <span>${generatedAt}</span>
+        </div>
+      </header>
+      <section class="packing-report-title">
+        <h1>Stock disponible por medida</h1>
+        <p>1 bunch = 10 tallos · Caja HB: 25 bunches en 70 cm; 30 bunches en 50, 55 y 60 cm.</p>
+      </section>
+      <section class="print-section packing-report-table">
+        <table>
+          <thead>
+            <tr>
+              <th>Variedad</th>
+              <th>Medida</th>
+              <th class="number-cell">Stock disp.<br>(tallos)</th>
+              <th class="number-cell">Bunches</th>
+              <th>Tipo caja</th>
+              <th class="number-cell">Bunches x<br>caja</th>
+              <th>Cajas</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rows.length ? rows.map(row => `
+              <tr>
+                <td>${row.variedad}</td>
+                <td>${medidaLabel(row.medida)}</td>
+                <td class="number-cell">${fmtInt(row.stockDisponible)}</td>
+                <td class="number-cell">${fmtInt(row.bunches)}</td>
+                <td>${row.tipoCaja}</td>
+                <td class="number-cell">${fmtInt(row.bunchesPorCaja)}</td>
+                <td>${coldPackingLabel(row)}</td>
+              </tr>`).join('') : '<tr><td colspan="7">No existe stock comercial disponible para preparar cajas.</td></tr>'}
+          </tbody>
+          <tfoot>
+            <tr>
+              <th>Total</th>
+              <th></th>
+              <th class="number-cell">${fmtInt(totals.stock)}</th>
+              <th class="number-cell">${fmtInt(totals.bunches)}</th>
+              <th>HB</th>
+              <th class="number-cell">—</th>
+              <th>${totalBoxes}</th>
+            </tr>
+          </tfoot>
+        </table>
+      </section>
+      <footer class="print-footer">Altitud Flowers · Reporte interno generado desde el sistema</footer>
+    </div>`;
+}
+
 function printColdReport() {
   const report = $('coldPrintReport');
   if (!report || !coldStockData) {
@@ -188,11 +306,7 @@ function printCommercialReport() {
     return;
   }
   const data = commercialOnlyStockData(coldStockData);
-  report.innerHTML = buildColdPrintReport(data, coldFilters(), {
-    title: 'Reporte de disponibilidad comercial',
-    subtitle: 'Stock estimado disponible sin contar Nacional',
-    filterText: `${coldFilterSummary(coldFilters())} · Excluye Nacional`
-  });
+  report.innerHTML = buildColdPackingReport(data);
   window.print();
 }
 

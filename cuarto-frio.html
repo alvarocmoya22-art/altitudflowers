@@ -7,12 +7,12 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/estilos.css?v=20260813-auditoria2">
+  <link rel="stylesheet" href="css/estilos.css?v=20260819-pdf-cajas">
   <script src="data/local-data.js?v=20260616-postcosecha"></script>
   <script src="js/config.js?v=20260819-stock-sync"></script>
   <script src="js/permisos.js?v=20260622-cliente-stock"></script>
   <script src="js/nav.js?v=20260622-roles-kpis"></script>
-  <script src="js/cuarto-frio.js?v=20260813-auditoria" defer></script>
+  <script src="js/cuarto-frio.js?v=20260819-pdf-cajas" defer></script>
 </head>
 <body data-module="cuarto-frio" class="module-page module-cold-room">
   <div class="shell">
@@ -31,7 +31,7 @@
           <div class="subtitle">Inventario por variedad y medida, cruzando poscosecha contra ventas.</div>
         </div>
         <div class="actions">
-          <button class="btn" id="printCommercialReportBtn" type="button">PDF sin Nacional</button>
+          <button class="btn" id="printCommercialReportBtn" type="button" title="Generar reporte de cajas HB sin Nacional">PDF cajas HB</button>
           <button class="btn primary" id="printColdReportBtn" type="button">Imprimir reporte</button>
           <div class="status" id="status">Cargando...</div>
         </div>
