@@ -1256,7 +1256,7 @@ tbody tr:hover td{
 .operation-home{display:grid;gap:28px}
 .operation-grid{
   display:grid;
-  grid-template-columns:repeat(4,minmax(0,1fr));
+  grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
   gap:18px;
 }
 .operation-card{
@@ -1294,6 +1294,40 @@ tbody tr:hover td{
 .operation-card small{display:block;color:var(--muted);font-size:14px;line-height:1.45}
 @media(max-width:1100px){.operation-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:640px){.operation-grid{grid-template-columns:1fr}.operation-card{min-height:170px}}
+
+/* Control de calidad: puerta de entrada al inventario vendible */
+.quality-hero{
+  background:
+    radial-gradient(circle at 95% 74%,rgba(72,89,5,.11) 0 0,rgba(72,89,5,.11) 110px,transparent 111px),
+    linear-gradient(135deg,#fff,#f8faf4);
+}
+.quality-kpis{grid-template-columns:repeat(4,minmax(180px,1fr))}
+.quality-layout{display:grid;grid-template-columns:minmax(360px,.85fr) minmax(520px,1.15fr);gap:22px;align-items:start;margin-bottom:24px}
+.quality-layout>.panel{margin-bottom:0;min-width:0}
+.quality-pending-panel,.quality-form{border-top:4px solid var(--gold)}
+.quality-table-wrap{max-height:520px;overflow:auto}
+.quality-table-wrap thead th{position:sticky;top:0;z-index:2}
+.quality-form fieldset{min-width:0;margin:0;padding:0;border:0}
+.quality-form fieldset:disabled{opacity:.62}
+.quality-source-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:22px}
+.quality-source-grid>div{min-height:78px;padding:13px 14px;border:1px solid var(--border);border-radius:14px;background:#fbfcf8}
+.quality-source-grid span{display:block;color:var(--muted);font-size:11px;font-weight:850;text-transform:uppercase}
+.quality-source-grid strong{display:block;margin-top:8px;font-size:17px;overflow-wrap:anywhere}
+.quality-subheading{margin:4px 0 14px}
+.quality-subheading h4{margin:0;font-size:18px}
+.quality-measures-grid{grid-template-columns:repeat(3,minmax(0,1fr));padding:0;border:0;background:transparent}
+.quality-measures-grid label{display:flex;justify-content:space-between;gap:8px}
+.quality-measures-grid label small{color:var(--muted);font-weight:700;text-transform:none}
+.quality-totals{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:20px 0 14px}
+.quality-totals>div{padding:14px;border:1px solid var(--border);border-radius:14px;background:#f7f9f3}
+.quality-totals span{display:block;color:var(--muted);font-size:11px;font-weight:850;text-transform:uppercase}
+.quality-totals strong{display:block;margin-top:8px;font-size:21px}
+.quality-result.ok{color:#315c1b}.quality-result.warn{color:#8a6500}.quality-result.bad{color:#a83232}
+.quality-warning{margin-top:0}
+.quality-actions{justify-content:flex-end;margin-top:18px}
+@media(max-width:1180px){.quality-layout{grid-template-columns:1fr}.quality-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:760px){.quality-kpis,.quality-source-grid,.quality-totals{grid-template-columns:1fr 1fr}.quality-measures-grid{grid-template-columns:1fr!important}.quality-actions{flex-direction:column-reverse}.quality-actions .btn{width:100%}}
+@media(max-width:480px){.quality-kpis,.quality-source-grid,.quality-totals{grid-template-columns:1fr}}
 
 /* Navegacion superior estable: evita que los enlaces se superpongan */
 .sidebar{

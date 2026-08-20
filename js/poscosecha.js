@@ -1,6 +1,7 @@
 const PROCESADORAS_POSCOSECHA = ['MARGARITA', 'ANGELICA', 'CRISTINA'];
 
 let poscosechaRows = [];
+let poscosechaQualityRows = [];
 let editingPoscosechaId = '';
 
 function poscosechaId(row) {
@@ -60,8 +61,18 @@ function dedupePoscosecha(rows) {
   );
 }
 
+function poscosechaNeedsQuality(row) {
+  const processDate = normalizarFecha(row.fecha);
+  const createdDate = normalizarFecha(text(row.creado_en).slice(0, 10));
+  return processDate >= ALTITUD.qualityCutoverDate || createdDate >= ALTITUD.qualityCutoverDate;
+}
+
 function renderPoscosecha(rows) {
   const normalized = dedupePoscosecha(rows);
+  const qualityByPos = new Map();
+  normalizeQuality(poscosechaQualityRows).forEach(control => {
+    qualityPosIds(control).forEach(id => qualityByPos.set(id, control));
+  });
   $('kProcesados').textContent = fmtInt(normalized.reduce((a, r) => a + r.tallos_procesados, 0));
   $('kUtil').textContent = fmtInt(normalized.reduce((a, r) => a + r.comercial, 0));
   $('kBasura').textContent = fmtInt(normalized.reduce((a, r) => a + r.nacional, 0));
@@ -78,6 +89,14 @@ function renderPoscosecha(rows) {
     r => fmtInt(r.tallos_50),
     r => fmtInt(r.nacional),
     r => fmtInt(r.basura),
+    r => {
+      const control = qualityByPos.get(text(r.id_poscosecha));
+      if (!control) return poscosechaNeedsQuality(r)
+        ? '<span class="pill warn">PENDIENTE</span>'
+        : '<span class="pill">HISTORICO</span>';
+      const cls = control.estado_calidad === 'RECHAZADO' ? 'bad' : control.estado_calidad === 'AJUSTADO' ? 'warn' : 'ok';
+      return `<span class="pill ${cls}">${control.estado_calidad}</span>`;
+    },
     r => `<div class="row-actions"><button class="btn small" type="button" data-edit-poscosecha="${poscosechaId(r)}">Editar</button><button class="btn danger small" type="button" data-delete-poscosecha="${poscosechaId(r)}">Eliminar</button></div>`
   ]);
 }
@@ -210,6 +229,11 @@ async function initPoscosecha() {
   } catch (err) {
     poscosechaRows = localDataRows('datos_web');
   }
+  try {
+    poscosechaQualityRows = await loadSheet(ALTITUD.sheets.controlCalidad);
+  } catch (err) {
+    poscosechaQualityRows = [];
+  }
 
   renderPoscosecha(poscosechaRows);
   setStatus(`Poscosecha - ${dedupePoscosecha(poscosechaRows).length} registros`);
@@ -231,6 +255,7 @@ async function initPoscosecha() {
     if (!confirm('Eliminar este registro de poscosecha?')) return;
 
     poscosechaRows = poscosechaRows.filter(row => poscosechaId(row) !== id);
+    poscosechaQualityRows = normalizeQuality(poscosechaQualityRows).filter(row => !qualityPosIds(row).includes(id));
     if (editingPoscosechaId === id) clearPoscosechaForm();
     renderPoscosecha(poscosechaRows);
     setStatus('Eliminando registro...');
@@ -251,14 +276,17 @@ async function initPoscosecha() {
     poscosechaRows = wasEditing
       ? poscosechaRows.map(row => poscosechaId(row) === editingPoscosechaId ? record : row)
       : [record, ...poscosechaRows];
+    if (wasEditing) {
+      poscosechaQualityRows = normalizeQuality(poscosechaQualityRows).filter(row => !qualityPosIds(row).includes(record.id_poscosecha));
+    }
 
     renderPoscosecha(poscosechaRows);
 
     try {
       await submitRecord(ALTITUD.sheets.poscosecha, record);
       setStatus(wasEditing
-        ? 'Poscosecha actualizada y rendimiento recalculado'
-        : 'Poscosecha guardada y rendimiento actualizado automaticamente');
+        ? 'Poscosecha actualizada; requiere un nuevo control de calidad'
+        : 'Poscosecha guardada; pendiente de control de calidad');
     } catch (err) {
       setStatus(wasEditing
         ? 'Poscosecha actualizada en pantalla; no se pudo sincronizar con Sheets'

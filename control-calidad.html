@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Altitud Flowers | Control de Calidad</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/estilos.css?v=20260820-calidad">
+  <script src="data/local-data.js?v=20260616-postcosecha"></script>
+  <script src="js/config.js?v=20260820-calidad-diaria"></script>
+  <script src="js/permisos.js?v=20260820-calidad"></script>
+  <script src="js/nav.js?v=20260729-operacion"></script>
+  <script src="js/control-calidad.js?v=20260820-calidad-diaria" defer></script>
+</head>
+<body data-module="control-calidad" class="module-page module-quality">
+  <div class="shell">
+    <aside class="sidebar">
+      <div class="brand">Altitud Flowers</div>
+      <div class="brand-sub">Control de calidad</div>
+      <nav class="nav"></nav>
+      <div class="source">Solo los tallos aprobados ingresan a cuarto frio.</div>
+    </aside>
+
+    <main class="main">
+      <section class="module-hero quality-hero">
+        <div>
+          <div class="module-eyebrow">Control de calidad</div>
+          <h1>Liberacion de inventario</h1>
+          <div class="subtitle">Revisa el total procesado de cada dia y variedad antes de liberar la cantidad real a cuarto frio.</div>
+        </div>
+        <div class="status" id="status">Cargando...</div>
+      </section>
+
+      <section class="kpis quality-kpis">
+        <div class="card kpi"><div class="label">Pendientes</div><div class="value" id="kCalidadPendientes">-</div><div class="note">Sin revision</div></div>
+        <div class="card kpi"><div class="label">Revisados</div><div class="value" id="kCalidadRevisados">-</div><div class="note">Totales diarios</div></div>
+        <div class="card kpi"><div class="label">Liberados</div><div class="value" id="kCalidadLiberados">-</div><div class="note">Tallos aprobados</div></div>
+        <div class="card kpi"><div class="label">Rechazados</div><div class="value" id="kCalidadRechazados">-</div><div class="note">Ajuste de calidad</div></div>
+      </section>
+
+      <div class="quality-layout">
+        <section class="card panel quality-pending-panel">
+          <div class="section-heading">
+            <div><h3>Totales diarios pendientes</h3><p>Se suma toda la poscosecha de la misma fecha y variedad, sin separar por procesadora.</p></div>
+          </div>
+          <div class="table-wrap quality-table-wrap">
+            <table>
+              <thead><tr><th>Fecha</th><th>Variedad</th><th>Registros</th><th>Declarado</th><th>Accion</th></tr></thead>
+              <tbody id="qualityPendingBody"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <form class="card panel quality-form" id="qualityForm">
+          <div class="section-heading">
+            <div><h3 id="qualityFormTitle">Revision del total diario</h3><p id="qualityFormHint">Selecciona una fecha y variedad pendiente para comenzar.</p></div>
+          </div>
+
+          <fieldset id="qualityFields" disabled>
+            <div class="quality-source-grid">
+              <div><span>Fecha proceso</span><strong id="qFechaProceso">-</strong></div>
+              <div><span>Variedad</span><strong id="qVariedad">-</strong></div>
+              <div><span>Registros poscosecha</span><strong id="qRegistros">-</strong></div>
+              <div><span>Declarado util</span><strong id="qDeclarado">0</strong></div>
+            </div>
+
+            <div class="section-heading quality-subheading"><div><h4>Cantidades aprobadas</h4><p>Puedes reducir cada medida segun el conteo real. Nunca puede superar lo declarado.</p></div></div>
+            <div class="form-grid quality-measures-grid">
+              <div class="field"><label for="qa70">70 cm <small id="qd70">de 0</small></label><input id="qa70" type="number" min="0" step="1"></div>
+              <div class="field"><label for="qa60">60 cm <small id="qd60">de 0</small></label><input id="qa60" type="number" min="0" step="1"></div>
+              <div class="field"><label for="qa55">55 cm <small id="qd55">de 0</small></label><input id="qa55" type="number" min="0" step="1"></div>
+              <div class="field"><label for="qa50">50 cm <small id="qd50">de 0</small></label><input id="qa50" type="number" min="0" step="1"></div>
+              <div class="field"><label for="qaNacional">Nacional <small id="qdNacional">de 0</small></label><input id="qaNacional" type="number" min="0" step="1"></div>
+              <div class="field"><label for="qControlador">Controlado por</label><input id="qControlador" required autocomplete="name"></div>
+              <div class="field"><label for="qMotivo">Motivo del ajuste</label><select id="qMotivo"><option value="">Sin ajuste</option><option>CLASIFICACION INCORRECTA</option><option>TALLOS CORTOS</option><option>DAÑO MECANICO</option><option>ENFERMEDAD</option><option>DESHIDRATACION</option><option>CONTEO INCORRECTO</option><option>OTRO</option></select></div>
+              <div class="field wide"><label for="qObservaciones">Observaciones</label><textarea id="qObservaciones" rows="3"></textarea></div>
+            </div>
+
+            <div class="quality-totals">
+              <div><span>Declarado</span><strong id="qTotalDeclarado">0</strong></div>
+              <div><span>Aprobado</span><strong id="qTotalAprobado">0</strong></div>
+              <div><span>Rechazado</span><strong id="qTotalRechazado">0</strong></div>
+              <div><span>Resultado</span><strong id="qEstado">PENDIENTE</strong></div>
+            </div>
+
+            <div class="notice quality-warning">Al guardar, solo la cantidad aprobada se suma al stock disponible y queda habilitada para ventas.</div>
+            <div class="actions quality-actions">
+              <button class="btn" id="qCancel" type="button">Cancelar</button>
+              <button class="btn primary" id="qSave" type="submit">Aprobar control</button>
+            </div>
+          </fieldset>
+        </form>
+      </div>
+
+      <section class="card panel">
+        <div class="section-heading"><div><h3>Historial de controles</h3><p>Registro de cantidades liberadas, ajustadas o rechazadas.</p></div></div>
+        <div class="table-wrap quality-table-wrap">
+          <table>
+            <thead><tr><th>Control</th><th>Proceso</th><th>Variedad</th><th>Registros</th><th>Declarado</th><th>Aprobado</th><th>Rechazado</th><th>Estado</th><th>Controlador</th><th>Accion</th></tr></thead>
+            <tbody id="qualityHistoryBody"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </div>
+</body>
+</html>

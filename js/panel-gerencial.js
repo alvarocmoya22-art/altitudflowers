@@ -20,16 +20,22 @@ async function loadSafe(sheet){try{return await loadSheet(sheet)}catch(err){retu
 async function buildDashboard(){
   setStatus('Cargando KPIs...');
   const filters=currentFilters();
-  const [produccionRaw,posRaw,ventasRaw,accountsRaw,ingresosRaw,comparativoRaw,clientesRaw,rendimientoRaw]=await Promise.all([
-    loadSafe(ALTITUD.sheets.produccion),loadSafe(ALTITUD.sheets.poscosecha),loadSafe(ALTITUD.sheets.ventas),loadSafe(ALTITUD.sheets.estadoCuenta),loadSafe(ALTITUD.sheets.ingresos),loadSafe(ALTITUD.sheets.comparativoProyeccion),loadSafe(ALTITUD.sheets.clientes),loadSafe(ALTITUD.sheets.rendimientoProcesadoras)
+  const [produccionRaw,posRaw,controlRaw,ventasRaw,accountsRaw,ingresosRaw,comparativoRaw,clientesRaw,rendimientoRaw]=await Promise.all([
+    loadSafe(ALTITUD.sheets.produccion),loadSafe(ALTITUD.sheets.poscosecha),loadSafe(ALTITUD.sheets.controlCalidad),loadSafe(ALTITUD.sheets.ventas),loadSafe(ALTITUD.sheets.estadoCuenta),loadSafe(ALTITUD.sheets.ingresos),loadSafe(ALTITUD.sheets.comparativoProyeccion),loadSafe(ALTITUD.sheets.clientes),loadSafe(ALTITUD.sheets.rendimientoProcesadoras)
   ]);
   const produccion=filterRows(cleanProductionRows(produccionRaw),filters,'produccion');
   const poscosecha=filterRows(normalizeProcessed(posRaw),filters,'poscosecha');
+  const controlesTodos=normalizeQuality(controlRaw);
+  const controles=filterRows(controlesTodos,filters,'control-calidad');
   const ventas=filterRows(normalizeSales(ventasRaw),filters,'ventas');
   const accounts=filterRows(normalizeAccounts(accountsRaw),filters,'finanzas');
   const ingresos=filterRows(ingresosRaw,filters,'finanzas');
   const comparativo=filterRows(comparativoRaw,filters,'comparativo');
-  const stockData=calculateColdRoomStock(posRaw,ventasRaw,filters);
+  const stockData=calculateColdRoomStock(controlRaw,ventasRaw,filters);
+  const controlesPorTotal=new Map(controlesTodos.map(row=>[row.clave_control||qualityGroupKey(row.fecha_proceso,row.variedad),row]));
+  const gruposCalidad=new Map();
+  poscosecha.filter(row=>row.fecha>=ALTITUD.qualityCutoverDate||normalizarFecha(text(row.creado_en).slice(0,10))>=ALTITUD.qualityCutoverDate).forEach(row=>{const key=qualityGroupKey(row.fecha,row.variedad);if(!gruposCalidad.has(key))gruposCalidad.set(key,{key,ids:[]});gruposCalidad.get(key).ids.push(text(row.id_poscosecha))});
+  const pendientesCalidad=Array.from(gruposCalidad.values()).filter(group=>{const control=controlesPorTotal.get(group.key);if(!control)return true;return qualityPosIds(control).sort().join('|')!==group.ids.filter(Boolean).sort().join('|')});
   const stock=stockData.porVariedad;
   const rendimientoBase=poscosecha.map(row=>({fecha:row.fecha,semana:row.semana,procesadora:row.responsable,tallos_procesados:row.comercial+row.nacional,minutos_trabajados:row.minutos_trabajados,horas_trabajadas:asNumber(row.minutos_trabajados)/60,estado:row.estado,variedad:row.variedad}));
   const rendimiento=filterRows(rendimientoBase,filters,'rendimiento').map(row=>{const tallos=asNumber(row.tallos_procesados||row.tallos),horas=asNumber(row.horas_trabajadas)||asNumber(row.minutos_trabajados)/60;return{...row,tallos,horas,tallosHora:horas?tallos/horas:0,procesadora:text(row.procesadora||row.responsable).toUpperCase()}});
@@ -65,6 +71,7 @@ async function buildDashboard(){
     kpiCard('Tallos cortados hoy',fmtInt(prodToday),`Campo - ${todayLabel()}`,'operativo'),
     kpiCard('Tallos cortados acumulados',fmtInt(produccion.reduce((a,r)=>a+asNumber(r.tallos_cortados),0)),'Periodo filtrado','operativo'),
     kpiCard('Tallos procesados hoy',fmtInt(posToday),`Poscosecha - ${todayLabel()}`,'operativo'),
+    kpiCard('Pendientes de calidad',fmtInt(pendientesCalidad.length),'No ingresan aun a cuarto frio','operativo'),
     kpiCard('Stock disponible',fmtInt(stockTotal),'Cuarto frio','operativo'),
     kpiCard('Tallos vendidos hoy',fmtInt(soldToday),`Ventas - ${todayLabel()}`,'ventas'),
     kpiCard('Promedio tallos/hora',fmtInt(promedioRendimiento),rendimientoHoras?'Rendimiento procesadoras':'Sin minutos registrados','operativo'),
@@ -81,7 +88,7 @@ async function buildDashboard(){
   const topResponsable=topEntry(groupSum(produccion,r=>text(r.responsable),r=>asNumber(r.tallos_cortados)));
   renderMini('produccionKpis',[['Mes',fmtInt(prodMonth)],['Variedad lider',topVar[0]],['Siembra lider',topSiembra[0]],['Responsable',topResponsable[0]]]);
   renderRows($('produccionBody'),[['Cortados mes',fmtInt(prodMonth)],['Cumplimiento',fmtPct(cumplimiento)],['Diferencia proyeccion',fmtInt(compReal-compProy)]],[r=>r[0],r=>r[1]]);
-  renderMini('poscosechaKpis',[['Procesados',fmtInt(posTotal)],['Comercial',fmtInt(poscosecha.reduce((a,r)=>a+r.comercial,0))],['Nacional',fmtInt(poscosecha.reduce((a,r)=>a+r.nacional,0))],['Descarte',fmtInt(basuraTotal)]]);
+  renderMini('poscosechaKpis',[['Procesados',fmtInt(posTotal)],['Aprobados',fmtInt(controles.reduce((a,r)=>a+r.tallos_aprobados,0))],['Pendientes',fmtInt(pendientesCalidad.length)],['Rechazados calidad',fmtInt(controles.reduce((a,r)=>a+r.tallos_rechazados,0))]]);
   renderRows($('medidasBody'),[['70 cm',poscosecha.reduce((a,r)=>a+r.tallos_70,0)],['60 cm',poscosecha.reduce((a,r)=>a+r.tallos_60,0)],['55 cm',poscosecha.reduce((a,r)=>a+r.tallos_55,0)],['50 cm',poscosecha.reduce((a,r)=>a+r.tallos_50,0)],['Nacional',poscosecha.reduce((a,r)=>a+r.nacional,0)]],[r=>r[0],r=>fmtInt(r[1])]);
   renderMini('inventarioKpis',[['Disponible',fmtInt(stockTotal)],['Stock nacional',fmtInt(stockData.porVariedadMedida.filter(r=>r.medida==='NACIONAL').reduce((a,r)=>a+r.stockDisponible,0))],['Bajo stock',fmtInt(stockData.resumen.variedadesBajoStock)],['Agotadas',fmtInt(stockData.resumen.variedadesAgotadas)]]);
   renderRows($('stockBody'),stockData.porVariedadMedida.slice(0,8),[r=>`${r.variedad} ${medidaLabel(r.medida)}`,r=>fmtInt(r.stockDisponible),r=>r.estado==='AGOTADO'||r.estado==='INCONSISTENCIA'?'<span class="pill bad">'+r.estado+'</span>':r.estado==='BAJO STOCK'?'<span class="pill warn">BAJO STOCK</span>':'<span class="pill ok">DISPONIBLE</span>']);
@@ -95,6 +102,7 @@ async function buildDashboard(){
   renderMini('proyeccionKpis',[['Proyectado',fmtInt(compProy)],['Real',fmtInt(compReal)],['Diferencia',fmtInt(compReal-compProy)],['Cumplimiento',fmtPct(cumplimiento)]]);
   renderRows($('proyeccionBody'),Object.entries(estadosComp),[r=>r[0]||'SIN ESTADO',r=>fmtInt(r[1])]);
   const alerts=[];
+  if(pendientesCalidad.length)alerts.push(alertItem('warn','Control de calidad pendiente',`${fmtInt(pendientesCalidad.length)} totales diarios aun no forman parte del stock vendible.`));
   if(stockData.resumen.variedadesBajoStock)alerts.push(alertItem('warn','Bajo stock','Una o mas variedades/medidas estan por debajo del minimo.'));
   if(stockData.resumen.variedadesAgotadas)alerts.push(alertItem('bad','Variedades agotadas','Existen variedades/medidas sin disponibilidad.'));
   stockData.alertas.filter(a=>a.tipo==='bad').slice(0,3).forEach(a=>alerts.push(alertItem('bad','Alerta cuarto frio',a.mensaje)));

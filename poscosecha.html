@@ -7,12 +7,12 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/estilos.css?v=20260813-auditoria2">
+  <link rel="stylesheet" href="css/estilos.css?v=20260820-calidad">
   <script src="data/local-data.js?v=20260616-postcosecha"></script>
-  <script src="js/config.js?v=20260819-stock-sync"></script>
-  <script src="js/permisos.js?v=20260622-cliente-stock"></script>
+  <script src="js/config.js?v=20260820-calidad-diaria"></script>
+  <script src="js/permisos.js?v=20260820-calidad"></script>
   <script src="js/nav.js?v=20260622-roles-kpis"></script>
-  <script src="js/poscosecha.js?v=20260813-auditoria" defer></script>
+  <script src="js/poscosecha.js?v=20260820-calidad-diaria" defer></script>
 </head>
 <body data-module="poscosecha" class="module-page module-postharvest">
   <div class="shell">
@@ -39,7 +39,7 @@
         <div>
           <div class="module-eyebrow">Poscosecha</div>
           <h1>Procesamiento diario</h1>
-          <div class="subtitle">Registra tallos por medida, nacional y descarte para alimentar cuarto frio y ventas.</div>
+          <div class="subtitle">Registra tallos por medida, nacional y descarte. El inventario se libera despues del control de calidad.</div>
         </div>
         <div class="status" id="status">Cargando...</div>
       </section>
@@ -66,7 +66,7 @@
           <div class="field"><label for="basura">Descarte</label><input id="basura" type="number" min="0"></div>
           <div class="field"><label for="minutos">Minutos trabajados</label><input id="minutos" type="number" min="0" placeholder="Para rendimiento"></div>
           <div class="total-box"><span>Total procesado</span><span id="totalProcesado">0</span></div>
-          <div class="input-row-note">Comercial y nacional alimentan cuarto frio. Descarte queda separado para control interno. Los minutos calculan tallos por hora.</div>
+          <div class="input-row-note">Este registro alimenta rendimiento y queda pendiente de calidad. Solo lo aprobado ingresara a cuarto frio y ventas.</div>
           <div class="field wide"><label for="observaciones">Observaciones</label><input id="observaciones"></div>
           <div class="full actions" style="justify-content:flex-end"><button class="btn primary" type="submit">Guardar poscosecha</button></div>
         </form>
@@ -75,7 +75,7 @@
           <div class="section-heading"><div><h3>Detalle procesado</h3><p>Historial operativo por fecha, variedad y medida.</p></div></div>
           <div class="table-wrap">
             <table>
-              <thead><tr><th>Fecha</th><th>Semana</th><th>Variedad</th><th>Procesado</th><th>70</th><th>60</th><th>55</th><th>50</th><th>Nacional</th><th>Descarte</th><th>Accion</th></tr></thead>
+              <thead><tr><th>Fecha</th><th>Semana</th><th>Variedad</th><th>Procesado</th><th>70</th><th>60</th><th>55</th><th>50</th><th>Nacional</th><th>Descarte</th><th>Calidad</th><th>Accion</th></tr></thead>
               <tbody id="poscosechaBody"></tbody>
             </table>
           </div>

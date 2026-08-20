@@ -2,7 +2,27 @@
 
 El dashboard debe usar un Google Sheets con pestañas separadas por proceso. Esto evita mezclar pedidos, producción y cartera en una sola tabla.
 
+Flujo operativo vigente:
+
+`PRODUCCION_CAMPO -> POSCOSECHA -> CONTROL_CALIDAD -> CUARTO_FRIO -> VENTAS_VENDEDORES`
+
+Desde el 20 de agosto de 2026, Poscosecha ya no incrementa directamente el stock. Solo los totales diarios por fecha y variedad con control `APROBADO` o `AJUSTADO` ingresan al inventario vendible.
+
 ## Pestañas principales
+
+### CONTROL_CALIDAD
+Revision obligatoria entre Poscosecha y Cuarto Frio. Se crea automaticamente al publicar el Apps Script actualizado.
+
+Campos:
+`id_control_calidad`, `clave_control`, `id_poscosecha`, `ids_poscosecha`, `fecha_proceso`, `fecha_control`, `semana`, `variedad`, `procesadora`, `procesadoras`, `registros_procesados`, `tallos_declarados`, `tallos_70_aprobados`, `tallos_60_aprobados`, `tallos_55_aprobados`, `tallos_50_aprobados`, `nacional_aprobado`, `tallos_aprobados`, `tallos_rechazados`, `estado_calidad`, `controlador`, `motivo_rechazo`, `observaciones`, `creado_en`, `actualizado_en`, `origen`
+
+Cada fila representa un solo control de calidad para una combinacion `fecha_proceso + variedad`. Los campos `ids_poscosecha` y `procesadoras` conservan la trazabilidad de los registros originales sin separar la revision por persona.
+
+Estados permitidos:
+`APROBADO`, `AJUSTADO`, `RECHAZADO`
+
+Regla de inventario:
+`Stock disponible = tallos aprobados por calidad - tallos vendidos`
 
 ### DATOS_WEB
 Producción diaria o semanal. Es la hoja que ya lee el dashboard actual.
