@@ -1,4 +1,4 @@
-let coldProcessedRows = [];
+let coldQualityRows = [];
 let coldSalesRows = [];
 let coldStockData = null;
 
@@ -115,7 +115,7 @@ function buildColdPrintReport(data = coldStockData, filters = coldFilters(), opt
       </header>
       <section class="print-filter-line"><strong>Filtros:</strong> ${filterText}</section>
       <section class="print-kpis">
-        <div><span>Procesado util</span><strong>${fmtInt(r.procesadoUtil)}</strong></div>
+        <div><span>Aprobado calidad</span><strong>${fmtInt(r.procesadoUtil)}</strong></div>
         <div><span>Vendido</span><strong>${fmtInt(r.vendido)}</strong></div>
         <div><span>Stock disponible</span><strong>${fmtInt(r.stockDisponible)}</strong></div>
         <div><span>Variedades disponibles</span><strong>${fmtInt(r.variedadesDisponibles)}</strong></div>
@@ -125,14 +125,14 @@ function buildColdPrintReport(data = coldStockData, filters = coldFilters(), opt
       <section class="print-section">
         <h2>Resumen por variedad</h2>
         <table>
-          <thead><tr><th>Variedad</th><th>Procesado util</th><th>Vendido</th><th>Stock disponible</th><th>% vendido</th><th>Estado</th></tr></thead>
+          <thead><tr><th>Variedad</th><th>Aprobado calidad</th><th>Vendido</th><th>Stock disponible</th><th>% vendido</th><th>Estado</th></tr></thead>
           <tbody>${reportRows(data.porVariedad, [row => row.variedad, row => fmtInt(row.procesadoUtil), row => fmtInt(row.vendido), row => fmtInt(row.stockDisponible), row => fmtPct(row.porcentajeVendido), row => text(row.estado)])}</tbody>
         </table>
       </section>
       <section class="print-section">
         <h2>Stock disponible por medida</h2>
         <table>
-          <thead><tr><th>Variedad</th><th>Medida</th><th>Procesado util</th><th>Vendido</th><th>Stock disponible</th><th>Estado</th></tr></thead>
+          <thead><tr><th>Variedad</th><th>Medida</th><th>Aprobado calidad</th><th>Vendido</th><th>Stock disponible</th><th>Estado</th></tr></thead>
           <tbody>${reportRows(stockRows, [row => row.variedad, row => medidaLabel(row.medida), row => fmtInt(row.procesadoUtil), row => fmtInt(row.vendido), row => fmtInt(row.stockDisponible), row => text(row.estado)])}</tbody>
         </table>
       </section>
@@ -325,7 +325,7 @@ function setupColdFilters() {
     ['DISPONIBLE', 'BAJO STOCK', 'AGOTADO', 'INCONSISTENCIA'].map(e => `<option value="${e}">${e}</option>`).join('');
 
   document.querySelectorAll('.filters-panel input,.filters-panel select').forEach(el => {
-    el.addEventListener('change', () => renderColdRoom(calculateColdRoomStock(coldProcessedRows, coldSalesRows, coldFilters())));
+    el.addEventListener('change', () => renderColdRoom(calculateColdRoomStock(coldQualityRows, coldSalesRows, coldFilters())));
   });
 
   $('clearColdFilters')?.addEventListener('click', () => {
@@ -333,26 +333,31 @@ function setupColdFilters() {
       if (el.type === 'checkbox') el.checked = false;
       else el.value = '';
     });
-    renderColdRoom(calculateColdRoomStock(coldProcessedRows, coldSalesRows, coldFilters()));
+    renderColdRoom(calculateColdRoomStock(coldQualityRows, coldSalesRows, coldFilters()));
   });
 }
 
-async function initCuartoFrio() {
+async function refreshColdRoomData() {
   setStatus('Cargando stock real...');
   try {
-    coldProcessedRows = await loadSheet(ALTITUD.sheets.poscosecha);
+    coldQualityRows = await loadSheet(ALTITUD.sheets.controlCalidad);
     coldSalesRows = await loadSheet(ALTITUD.sheets.ventas);
+    renderColdRoom(calculateColdRoomStock(coldQualityRows, coldSalesRows, coldFilters()));
+    setStatus('Stock actualizado con control de calidad aprobado');
   } catch (err) {
-    coldProcessedRows = [];
+    coldQualityRows = [];
     coldSalesRows = [];
+    renderColdRoom(calculateColdRoomStock([], [], coldFilters()));
     setStatus('No se pudo leer Sheets; revisa permisos o publicacion');
   }
+}
 
+async function initCuartoFrio() {
   setupColdFilters();
   $('printCommercialReportBtn')?.addEventListener('click', printCommercialReport);
   $('printColdReportBtn')?.addEventListener('click', printColdReport);
-  renderColdRoom(calculateColdRoomStock(coldProcessedRows, coldSalesRows, coldFilters()));
-  setStatus('Stock actualizado por variedad y medida');
+  await refreshColdRoomData();
+  window.setInterval(refreshColdRoomData, 60000);
 }
 
 document.addEventListener('DOMContentLoaded', initCuartoFrio);

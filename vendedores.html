@@ -7,10 +7,10 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/estilos.css?v=20260813-auditoria2" />
+  <link rel="stylesheet" href="css/estilos.css?v=20260820-calidad-integracion" />
   <script src="data/local-data.js?v=20260616-postcosecha"></script>
-  <script src="js/config.js?v=20260819-stock-sync"></script>
-  <script src="js/vendedores.js?v=20260819-stock-sync" defer></script>
+  <script src="js/config.js?v=20260820-calidad-integracion"></script>
+  <script src="js/vendedores.js?v=20260820-calidad-integracion" defer></script>
 </head>
 <body data-module="vendedores">
   <section class="login-view" id="loginView">
@@ -34,13 +34,13 @@
           <a href="#stock">Cuarto frio</a>
           <a href="#detalle">Detalle</a>
         </nav>
-        <div class="source">Solo procesado y stock disponible para venta.</div>
+        <div class="source">Solo inventario aprobado y disponible para venta.</div>
       </aside>
       <main class="main">
         <div class="topbar">
           <div>
             <h1>Vendedores</h1>
-            <div class="subtitle">Stock disponible = tallos procesados - tallos vendidos</div>
+            <div class="subtitle">Stock disponible = tallos aprobados por calidad - tallos vendidos</div>
           </div>
           <div class="actions">
             <button class="btn" id="refreshBtn" type="button">Actualizar</button>
@@ -76,7 +76,7 @@
           <h3>Stock en cuarto frio</h3>
           <div class="table-wrap">
             <table>
-              <thead><tr><th>Variedad</th><th>Medida</th><th>Procesado util</th><th>Vendido</th><th>Stock disponible</th><th>Estado</th></tr></thead>
+              <thead><tr><th>Variedad</th><th>Medida</th><th>Aprobado calidad</th><th>Vendido</th><th>Stock disponible</th><th>Estado</th></tr></thead>
               <tbody id="availabilityBody"></tbody>
             </table>
           </div>
