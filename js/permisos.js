@@ -1,6 +1,6 @@
 const ALTITUD_ROLES={
-  GERENCIA:['panel','produccion','poscosecha','rendimiento','cuarto-frio','vendedores','estado-cuenta','comparativo-proyeccion','clientes','reportes','configuracion'],
-  OPERADORA_PRODUCCION:['produccion','poscosecha','rendimiento','cuarto-frio'],
+  GERENCIA:['panel','produccion','poscosecha','control-calidad','rendimiento','cuarto-frio','vendedores','estado-cuenta','comparativo-proyeccion','clientes','reportes','configuracion'],
+  OPERADORA_PRODUCCION:['produccion','poscosecha','control-calidad','rendimiento','cuarto-frio'],
   VENDEDOR:['vendedores','clientes','cuarto-frio'],
   ADMINISTRACION:['estado-cuenta','clientes','reportes'],
   CLIENTE_STOCK:['cuarto-frio']
@@ -9,6 +9,7 @@ const ALTITUD_MODULES=[
   {id:'panel',label:'Panel gerencial',href:'index.html'},
   {id:'produccion',label:'Produccion campo',href:'produccion.html'},
   {id:'poscosecha',label:'Poscosecha',href:'poscosecha.html'},
+  {id:'control-calidad',label:'Control de calidad',href:'control-calidad.html'},
   {id:'rendimiento',label:'Rendimiento',href:'rendimiento-procesadoras.html'},
   {id:'cuarto-frio',label:'Cuarto frio',href:'cuarto-frio.html'},
   {id:'vendedores',label:'Vendedores',href:'vendedores.html'},

@@ -1,8 +1,10 @@
 const SPREADSHEET_ID = '1QogpATp_-37gz23PAapTVsNHYNzo3XnnbFxflb0xKYo';
+const QUALITY_CUTOVER_DATE = '2026-08-20';
 const HEADERS_BY_SHEET = {
   USUARIOS: ['id_usuario','nombre','correo','rol','estado','fecha_registro'],
   PRODUCCION_CAMPO: ['id_produccion','fecha','semana','siembra','cama','variedad','tallos_cortados','responsable','estado','observaciones','creado_en','origen','lote','turno'],
   POSCOSECHA: ['id_poscosecha','fecha','semana','variedad','tallos_procesados','tallos_70','tallos_60','tallos_55','tallos_50','nacional','basura','aprovechamiento_pct','descarte_pct','responsable','observaciones','creado_en','origen','estado','minutos_trabajados'],
+  CONTROL_CALIDAD: ['id_control_calidad','clave_control','id_poscosecha','ids_poscosecha','fecha_proceso','fecha_control','semana','variedad','procesadora','procesadoras','registros_procesados','tallos_declarados','tallos_70_aprobados','tallos_60_aprobados','tallos_55_aprobados','tallos_50_aprobados','nacional_aprobado','tallos_aprobados','tallos_rechazados','estado_calidad','controlador','motivo_rechazo','observaciones','creado_en','actualizado_en','origen'],
   RENDIMIENTO_PROCESADORAS: ['id_rendimiento','fecha','semana','procesadora','variedad','medida_cm','bunches','tallos_procesados','horas_trabajadas','tallos_por_hora','bunches_por_hora','observaciones','creado_en','origen','estado','minutos_trabajados'],
   CUARTO_FRIO: ['fecha_corte','variedad','medida_cm','tallos_procesados','tallos_vendidos','stock_disponible','bunches_disponibles','estado_stock','ubicacion','observaciones','actualizado_en','origen'],
   VENTAS_VENDEDORES: ['id_venta','fecha','hora','vendedor','cliente','variedad','medida_cm','tipo','bunches','tallos','precio_unitario','total_venta','estado','observaciones','creado_en','origen'],
@@ -15,7 +17,7 @@ const HEADERS_BY_SHEET = {
 };
 const ROLE_PERMISSIONS = {
   GERENCIA: Object.keys(HEADERS_BY_SHEET),
-  OPERADORA_PRODUCCION: ['PRODUCCION_CAMPO','POSCOSECHA','RENDIMIENTO_PROCESADORAS','CUARTO_FRIO'],
+  OPERADORA_PRODUCCION: ['PRODUCCION_CAMPO','POSCOSECHA','CONTROL_CALIDAD','RENDIMIENTO_PROCESADORAS','CUARTO_FRIO'],
   VENDEDOR: ['VENTAS_VENDEDORES','CLIENTES','CUARTO_FRIO'],
   ADMINISTRACION: ['ESTADO_CUENTA','INGRESOS','FACTURAS','PAGOS_CLIENTES','CLIENTES','REPORTES'],
   CLIENTE_STOCK: ['CUARTO_FRIO']
@@ -47,9 +49,13 @@ function doPost(e) {
     if (!headers) throw new Error('Hoja no permitida: ' + sheetName);
     const role = getRole_(payload.user || {});
     if (!canWrite_(role, sheetName)) throw new Error('Rol sin permiso para escribir en ' + sheetName);
+    if (sheetName === 'CONTROL_CALIDAD') validarControlCalidad_(record);
     const sheet = getSheet_(sheetName, headers);
     const writeHeaders = getWritableHeaders_(sheet, headers);
     const existingRow = findRowById_(sheet, writeHeaders, record);
+    if (sheetName === 'POSCOSECHA' && existingRow > 1) {
+      eliminarControlCalidadDePoscosecha_(record.id_poscosecha);
+    }
     if (existingRow > 1) {
       sheet.getRange(existingRow, 1, 1, writeHeaders.length).setValues([writeHeaders.map(header => normalizeValue_(record[header]))]);
     } else {
@@ -58,7 +64,7 @@ function doPost(e) {
     if (sheetName === 'POSCOSECHA') {
       sincronizarRendimientoDesdePoscosecha_(record);
     }
-    return json_({ ok: true, sheet: sheetName, id: record.id_venta || record.id_produccion || record.id_poscosecha || record.id_rendimiento || record.id_cliente || '' });
+    return json_({ ok: true, sheet: sheetName, id: record.id_control_calidad || record.id_venta || record.id_produccion || record.id_poscosecha || record.id_rendimiento || record.id_cliente || '' });
   } catch (error) {
     return json_({ ok: false, error: String(error) });
   }
@@ -90,7 +96,7 @@ function canWrite_(role, sheetName) {
 
 
 function findRowById_(sheet, headers, record) {
-  const idFields = ['id_produccion','id_poscosecha','id_rendimiento','id_venta','id_cliente'];
+  const idFields = ['id_control_calidad','id_produccion','id_poscosecha','id_rendimiento','id_venta','id_cliente'];
   const idField = idFields.find(function(field) { return headers.indexOf(field) >= 0 && record[field]; });
   if (!idField) return -1;
   const idColumn = headers.indexOf(idField) + 1;
@@ -122,6 +128,7 @@ function deleteRecord_(sheetName, idField, idValue, user) {
       sheet.deleteRow(i + 2);
       if (sheetName === 'POSCOSECHA') {
         eliminarRendimientoDePoscosecha_(wanted);
+        eliminarControlCalidadDePoscosecha_(wanted);
       }
       return { ok: true, deleted: true, id: wanted };
     }
@@ -182,6 +189,93 @@ function eliminarRendimientoDePoscosecha_(idPoscosecha) {
   }
 }
 
+function eliminarControlCalidadDePoscosecha_(idPoscosecha) {
+  const headers = HEADERS_BY_SHEET.CONTROL_CALIDAD;
+  const sheet = getSheet_('CONTROL_CALIDAD', headers);
+  const writeHeaders = getWritableHeaders_(sheet, headers);
+  const lastRow = sheet.getLastRow();
+  if (lastRow < 2) return;
+  const wanted = String(idPoscosecha || '').trim();
+  const idIndex = writeHeaders.indexOf('id_poscosecha');
+  const idsIndex = writeHeaders.indexOf('ids_poscosecha');
+  const values = sheet.getRange(2, 1, lastRow - 1, writeHeaders.length).getValues();
+  for (let i = values.length - 1; i >= 0; i--) {
+    const joinedIds = String((idsIndex >= 0 && values[i][idsIndex]) || (idIndex >= 0 && values[i][idIndex]) || '');
+    const ids = joinedIds.split('|').map(function(id) { return String(id || '').trim(); });
+    if (ids.indexOf(wanted) >= 0) sheet.deleteRow(i + 2);
+  }
+}
+
+function validarControlCalidad_(record) {
+  const ids = String(record.ids_poscosecha || record.id_poscosecha || '')
+    .split('|')
+    .map(function(id) { return String(id || '').trim(); })
+    .filter(function(id, index, all) { return id && all.indexOf(id) === index; });
+  if (!ids.length) throw new Error('Control de calidad sin registros de poscosecha');
+
+  const idMap = {};
+  ids.forEach(function(id) { idMap[id] = true; });
+  const posRows = readObjects_('POSCOSECHA').filter(function(row) {
+    return idMap[String(row.id_poscosecha || '').trim()];
+  });
+  if (posRows.length !== ids.length) throw new Error('Uno o mas registros de poscosecha no existen');
+
+  const fecha = normalizarFecha_(posRows[0].fecha);
+  const variedad = normalizarVariedad_(posRows[0].variedad);
+  const mismoTotalDiario = posRows.every(function(row) {
+    return normalizarFecha_(row.fecha) === fecha && normalizarVariedad_(row.variedad) === variedad;
+  });
+  if (!mismoTotalDiario) throw new Error('El control solo puede agrupar una misma fecha y variedad');
+
+  const pairs = [
+    ['tallos_70','tallos_70_aprobados'],
+    ['tallos_60','tallos_60_aprobados'],
+    ['tallos_55','tallos_55_aprobados'],
+    ['tallos_50','tallos_50_aprobados'],
+    ['nacional','nacional_aprobado']
+  ];
+  let declarados = 0;
+  let aprobados = 0;
+  pairs.forEach(function(pair) {
+    const declarado = posRows.reduce(function(total, row) {
+      return total + Math.max(0, normalizarNumero_(row[pair[0]]));
+    }, 0);
+    const aprobado = normalizarNumero_(record[pair[1]]);
+    if (aprobado < 0 || aprobado > declarado) {
+      throw new Error(pair[1] + ' debe estar entre 0 y ' + declarado);
+    }
+    declarados += declarado;
+    aprobados += aprobado;
+  });
+
+  const rechazados = Math.max(0, declarados - aprobados);
+  if (rechazados > 0 && !String(record.motivo_rechazo || '').trim()) {
+    throw new Error('Debe registrar el motivo del ajuste o rechazo');
+  }
+  const procesadoras = [];
+  posRows.forEach(function(row) {
+    const nombre = String(row.responsable || '').trim().toUpperCase();
+    if (nombre && procesadoras.indexOf(nombre) < 0) procesadoras.push(nombre);
+  });
+  record.clave_control = fecha + '|' + variedad;
+  record.id_poscosecha = ids.join('|');
+  record.ids_poscosecha = ids.join('|');
+  record.fecha_proceso = fecha;
+  record.fecha_control = normalizarFecha_(record.fecha_control || new Date());
+  record.semana = normalizarNumero_(posRows[0].semana) || semanaISO_(fecha);
+  record.variedad = variedad;
+  record.procesadora = 'TOTAL DIA';
+  record.procesadoras = procesadoras.sort().join(', ');
+  record.registros_procesados = posRows.length;
+  record.tallos_declarados = declarados;
+  record.tallos_aprobados = aprobados;
+  record.tallos_rechazados = rechazados;
+  record.estado_calidad = aprobados <= 0 ? 'RECHAZADO' : aprobados < declarados ? 'AJUSTADO' : 'APROBADO';
+  record.actualizado_en = new Date();
+  if (!record.creado_en) record.creado_en = new Date();
+  if (!record.origen) record.origen = 'CONTROL_CALIDAD_WEB';
+}
+
 function sincronizarRendimientoHistorico() {
   const registros = readObjects_('POSCOSECHA');
   let sincronizados = 0;
@@ -211,6 +305,7 @@ function obtenerKPIsPanelGerencial(user) {
     resumen: {
       produccion_registros: readCount('PRODUCCION_CAMPO'),
       poscosecha_registros: readCount('POSCOSECHA'),
+      control_calidad_registros: readCount('CONTROL_CALIDAD'),
       rendimiento_registros: readCount('RENDIMIENTO_PROCESADORAS'),
       ventas_registros: readCount('VENTAS_VENDEDORES'),
       estado_cuenta_registros: readCount('ESTADO_CUENTA'),
@@ -355,21 +450,22 @@ function pasaFiltroStock_(row, filtros) {
 
 function calcularStockCuartoFrio_(filtros) {
   const minimo = Number(filtros.minimo || 500);
-  const pos = readObjects_('POSCOSECHA');
+  const controles = readObjects_('CONTROL_CALIDAD');
   const ventas = readObjects_('VENTAS_VENDEDORES');
-  const medidas = [['70','tallos_70'],['60','tallos_60'],['55','tallos_55'],['50','tallos_50'],['NACIONAL','nacional']];
+  const medidas = [['70','tallos_70_aprobados'],['60','tallos_60_aprobados'],['55','tallos_55_aprobados'],['50','tallos_50_aprobados'],['NACIONAL','nacional_aprobado']];
   const map = {};
   const ensure = function(variedad, medida) {
     const key = variedad + '|' + medida;
     if (!map[key]) map[key] = { variedad: variedad, medida: medida, procesadoUtil: 0, vendido: 0 };
     return map[key];
   };
-  pos.forEach(function(row) {
-    const estado = String(row.estado || '').toUpperCase();
-    if (estado === 'ELIMINADO' || estado === 'ANULADO') return;
+  controles.forEach(function(row) {
+    const estado = String(row.estado_calidad || '').toUpperCase();
+    if (estado !== 'APROBADO' && estado !== 'AJUSTADO') return;
     const variedad = normalizarVariedad_(row.variedad);
-    const fecha = normalizarFecha_(row.fecha);
-    const semana = normalizarNumero_(row.semana) || semanaISO_(fecha);
+    const fecha = normalizarFecha_(row.fecha_control);
+    if (!fecha || fecha < QUALITY_CUTOVER_DATE) return;
+    const semana = normalizarNumero_(row.semana) || semanaISO_(row.fecha_proceso || fecha);
     medidas.forEach(function(pair) {
       const medida = pair[0];
       const cantidad = normalizarNumero_(row[pair[1]]);
@@ -383,6 +479,7 @@ function calcularStockCuartoFrio_(filtros) {
     const variedad = normalizarVariedad_(row.variedad);
     const medida = normalizarMedida_(row.medida_cm || row.medida);
     const fecha = normalizarFecha_(row.fecha);
+    if (!fecha || fecha < QUALITY_CUTOVER_DATE) return;
     const semana = normalizarNumero_(row.semana) || semanaISO_(fecha);
     const cantidad = normalizarNumero_(row.tallos);
     const item = { fecha: fecha, semana: semana, variedad: variedad, medida: medida };
@@ -420,7 +517,7 @@ function calcularStockCuartoFrio_(filtros) {
   };
   const alertas = [];
   porVariedadMedida.forEach(function(row) {
-    if (row.estado === 'INCONSISTENCIA') alertas.push({ tipo: 'bad', mensaje: 'Venta supera stock procesado para ' + row.variedad + ' ' + row.medida });
+    if (row.estado === 'INCONSISTENCIA') alertas.push({ tipo: 'bad', mensaje: 'Venta supera inventario aprobado para ' + row.variedad + ' ' + row.medida });
     if (row.estado === 'AGOTADO') alertas.push({ tipo: 'bad', mensaje: row.variedad + ' ' + row.medida + ' agotado' });
     if (row.estado === 'BAJO STOCK') alertas.push({ tipo: 'warn', mensaje: 'Bajo stock en ' + row.variedad + ' ' + row.medida + ': ' + row.stockDisponible });
   });
@@ -438,6 +535,7 @@ function obtenerStockCuartoFrio(filtros) {
 
 function diagnosticarStockCuartoFrio(filtros) {
   const pos = readObjects_('POSCOSECHA');
+  const controles = readObjects_('CONTROL_CALIDAD');
   const ventas = readObjects_('VENTAS_VENDEDORES');
   const variedadesPos = {};
   const variedadesVentas = {};
@@ -453,7 +551,11 @@ function diagnosticarStockCuartoFrio(filtros) {
   });
   return {
     ok: true,
+    fechaCorteControlCalidad: QUALITY_CUTOVER_DATE,
     totalPoscosecha: pos.length,
+    totalControlesCalidad: controles.length,
+    controlesAprobados: controles.filter(function(r) { return ['APROBADO','AJUSTADO'].indexOf(String(r.estado_calidad || '').toUpperCase()) >= 0; }).length,
+    controlesRechazados: controles.filter(function(r) { return String(r.estado_calidad || '').toUpperCase() === 'RECHAZADO'; }).length,
     totalVentas: ventas.length,
     variedadesPoscosecha: Object.keys(variedadesPos),
     variedadesVentas: Object.keys(variedadesVentas),

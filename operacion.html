@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="css/estilos.css?v=20260813-auditoria2" />
+  <link rel="stylesheet" href="css/estilos.css?v=20260820-calidad-diaria" />
   <script>
     localStorage.setItem('altitudUsuarioActual', JSON.stringify({
       nombre: 'Operacion Altitud',
@@ -16,9 +16,9 @@
       estado: 'ACTIVO'
     }));
   </script>
-  <script src="js/config.js?v=20260819-stock-sync"></script>
-  <script src="js/permisos.js?v=20260622-cliente-stock"></script>
-  <script src="js/nav.js?v=20260729-operacion"></script>
+  <script src="js/config.js?v=20260820-calidad-diaria"></script>
+  <script src="js/permisos.js?v=20260820-calidad-diaria"></script>
+  <script src="js/nav.js?v=20260820-calidad-diaria"></script>
 </head>
 <body data-module="produccion">
   <div class="shell">
@@ -26,7 +26,7 @@
       <div class="brand">Altitud Flowers</div>
       <div class="brand-sub">Operacion</div>
       <nav class="nav" data-nav></nav>
-      <div class="source">Acceso limitado: campo, poscosecha, rendimiento y cuarto frio.</div>
+      <div class="source">Acceso limitado al flujo operativo y control de calidad.</div>
     </aside>
 
     <main class="main operation-home">
@@ -50,15 +50,20 @@
           <strong>Poscosecha</strong>
           <small>Registro de tallos procesados, descarte y responsable.</small>
         </a>
-        <a class="operation-card" href="rendimiento-procesadoras.html?rol=OPERADORA_PRODUCCION">
+        <a class="operation-card" href="control-calidad.html?rol=OPERADORA_PRODUCCION">
           <span>03</span>
+          <strong>Control de calidad</strong>
+          <small>Revision del total diario por variedad antes de liberar el inventario real.</small>
+        </a>
+        <a class="operation-card" href="rendimiento-procesadoras.html?rol=OPERADORA_PRODUCCION">
+          <span>04</span>
           <strong>Rendimiento</strong>
           <small>Consulta del rendimiento alimentado desde poscosecha.</small>
         </a>
         <a class="operation-card" href="cuarto-frio.html?rol=OPERADORA_PRODUCCION">
-          <span>04</span>
+          <span>05</span>
           <strong>Cuarto frio</strong>
-          <small>Disponibilidad procesada y stock actual.</small>
+          <small>Disponibilidad aprobada y stock actual.</small>
         </a>
       </section>
     </main>
