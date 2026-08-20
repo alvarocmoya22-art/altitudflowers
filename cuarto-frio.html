@@ -7,12 +7,12 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/estilos.css?v=20260819-pdf-cajas">
+  <link rel="stylesheet" href="css/estilos.css?v=20260820-calidad-integracion">
   <script src="data/local-data.js?v=20260616-postcosecha"></script>
-  <script src="js/config.js?v=20260819-stock-sync"></script>
-  <script src="js/permisos.js?v=20260622-cliente-stock"></script>
-  <script src="js/nav.js?v=20260622-roles-kpis"></script>
-  <script src="js/cuarto-frio.js?v=20260819-pdf-cajas" defer></script>
+  <script src="js/config.js?v=20260820-calidad-integracion"></script>
+  <script src="js/permisos.js?v=20260820-calidad-integracion"></script>
+  <script src="js/nav.js?v=20260820-calidad-integracion"></script>
+  <script src="js/cuarto-frio.js?v=20260820-calidad-integracion" defer></script>
 </head>
 <body data-module="cuarto-frio" class="module-page module-cold-room">
   <div class="shell">
@@ -20,7 +20,7 @@
       <div class="brand">Altitud Flowers</div>
       <div class="brand-sub">Cuarto frio</div>
       <nav class="nav"></nav>
-      <div class="source">Stock disponible = procesado util - vendido.</div>
+      <div class="source">Stock disponible = aprobado por calidad - vendido.</div>
     </aside>
 
     <main class="main">
@@ -28,7 +28,7 @@
         <div>
           <div class="module-eyebrow">Cuarto frio</div>
           <h1>Disponibilidad real</h1>
-          <div class="subtitle">Inventario por variedad y medida, cruzando poscosecha contra ventas.</div>
+          <div class="subtitle">Inventario real por variedad y medida, cruzando tallos aprobados contra ventas.</div>
         </div>
         <div class="actions">
           <button class="btn" id="printCommercialReportBtn" type="button" title="Generar reporte de cajas HB sin Nacional">PDF cajas HB</button>
@@ -40,7 +40,7 @@
       <section class="print-report" id="coldPrintReport" aria-label="Reporte imprimible de cuarto frio"></section>
 
       <section class="kpis cold-room-kpis">
-        <div class="card kpi"><div class="label">Procesado util</div><div class="value" id="kProcesado">-</div></div>
+        <div class="card kpi"><div class="label">Aprobado calidad</div><div class="value" id="kProcesado">-</div></div>
         <div class="card kpi"><div class="label">Vendido</div><div class="value" id="kVendido">-</div></div>
         <div class="card kpi"><div class="label">Stock disponible</div><div class="value" id="kStock">-</div></div>
         <div class="card kpi"><div class="label">Variedades disponibles</div><div class="value" id="kVariedades">-</div></div>
@@ -65,23 +65,23 @@
       </section>
 
       <section class="card panel" id="alertasStockPanel">
-        <div class="section-heading"><div><h3>Alertas de stock</h3><p>Bajo stock, agotados e inconsistencias entre poscosecha y ventas.</p></div></div>
+        <div class="section-heading"><div><h3>Alertas de stock</h3><p>Bajo stock, agotados e inconsistencias entre inventario aprobado y ventas.</p></div></div>
         <div class="alerts-list" id="stockAlertsBody"></div>
       </section>
 
       <section class="card panel">
         <div class="section-heading"><div><h3>Disponibilidad consolidada por variedad</h3><p>Resumen total por variedad.</p></div></div>
-        <div class="table-wrap"><table><thead><tr><th>Variedad</th><th>Procesado util</th><th>Vendido</th><th>Stock disponible</th><th>% vendido</th><th>Estado</th></tr></thead><tbody id="stockVariedadBody"></tbody></table></div>
+        <div class="table-wrap"><table><thead><tr><th>Variedad</th><th>Aprobado calidad</th><th>Vendido</th><th>Stock disponible</th><th>% vendido</th><th>Estado</th></tr></thead><tbody id="stockVariedadBody"></tbody></table></div>
       </section>
 
       <section class="card panel">
         <div class="section-heading"><div><h3>Disponibilidad por variedad y medida</h3><p>Tabla principal para validar ventas. El cruce se hace por variedad + medida.</p></div></div>
-        <div class="table-wrap"><table><thead><tr><th>Variedad</th><th>Medida</th><th>Procesado util</th><th>Vendido</th><th>Stock disponible</th><th>% vendido</th><th>Estado</th></tr></thead><tbody id="stockMedidaBody"></tbody></table></div>
+        <div class="table-wrap"><table><thead><tr><th>Variedad</th><th>Medida</th><th>Aprobado calidad</th><th>Vendido</th><th>Stock disponible</th><th>% vendido</th><th>Estado</th></tr></thead><tbody id="stockMedidaBody"></tbody></table></div>
       </section>
 
       <section class="card panel">
         <div class="section-heading"><div><h3>Detalle operativo por fecha</h3><p>Lectura por fecha, semana, variedad y medida.</p></div></div>
-        <div class="table-wrap"><table><thead><tr><th>Fecha</th><th>Semana</th><th>Variedad</th><th>Medida</th><th>Procesado</th><th>Vendido</th><th>Stock</th><th>Observacion</th></tr></thead><tbody id="stockDetalleBody"></tbody></table></div>
+        <div class="table-wrap"><table><thead><tr><th>Fecha control</th><th>Semana</th><th>Variedad</th><th>Medida</th><th>Aprobado</th><th>Vendido</th><th>Stock</th><th>Observacion</th></tr></thead><tbody id="stockDetalleBody"></tbody></table></div>
       </section>
     </main>
   </div>

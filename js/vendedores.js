@@ -1,4 +1,4 @@
-let processedRows = [];
+let qualityRows = [];
 let salesRows = [];
 let pendingSalesRows = [];
 let stockRows = [];
@@ -115,7 +115,7 @@ function updatePreview() {
 
 function renderVendedores() {
   // Solo las ventas confirmadas en Sheets descuentan el inventario compartido.
-  stockData = calculateColdRoomStock(processedRows, salesRows);
+  stockData = calculateColdRoomStock(qualityRows, salesRows);
   stockRows = stockData.porVariedadMedida;
   const visibleRows = activeMeasureRows();
   const totalStock = stockData.resumen.stockDisponible;
@@ -150,13 +150,13 @@ function reconcilePendingSales() {
 async function loadVendedores() {
   setStatus('Cargando ventas...');
   const data = await loadProcessedAndSales();
-  processedRows = data.processed;
+  qualityRows = data.quality;
   salesRows = data.sales;
   pendingSalesRows = data.pendingSales || [];
   reconcilePendingSales();
   renderVendedores();
   const pendingText = pendingSalesRows.length ? ` · ${pendingSalesRows.length} pendiente(s) de confirmar` : '';
-  setStatus(`En linea - ${processedRows.length} registros de poscosecha${pendingText}`);
+  setStatus(`En linea - ${qualityRows.length} controles de calidad${pendingText}`);
 }
 
 function buildSaleRecord() {
@@ -344,6 +344,10 @@ async function initVendedores() {
       updatePreview();
     }
   });
+
+  window.setInterval(() => {
+    if (loginOk()) loadVendedores();
+  }, 60000);
 }
 
 document.addEventListener('DOMContentLoaded', initVendedores);
