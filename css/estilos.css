@@ -1487,3 +1487,253 @@ input,select,textarea,button{max-width:100%}
   .actions .btn,.btn.primary{width:100%}
   .kpis,.compact-kpis,.grid-2,.grid-3,.module-layout,.postharvest-layout{grid-template-columns:1fr!important}
 }
+
+/* Barra lateral contraible compartida */
+:root{
+  --sidebar-open-width:268px;
+  --sidebar-closed-width:82px;
+}
+body.has-collapsible-sidebar .shell{
+  display:grid;
+  grid-template-columns:var(--sidebar-open-width) minmax(0,1fr);
+  min-height:100vh;
+  transition:grid-template-columns .22s ease;
+}
+body.has-collapsible-sidebar.sidebar-collapsed .shell{
+  grid-template-columns:var(--sidebar-closed-width) minmax(0,1fr);
+}
+body.has-collapsible-sidebar .sidebar{
+  position:sticky;
+  top:0;
+  z-index:80;
+  width:100%;
+  height:100vh;
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+  align-items:stretch;
+  gap:0;
+  padding:24px 16px 18px;
+  overflow:hidden;
+  background:rgba(255,255,255,.96);
+  color:var(--app-text);
+  border-right:1px solid var(--app-line);
+  border-bottom:0;
+  box-shadow:10px 0 32px rgba(40,49,23,.06);
+  backdrop-filter:blur(16px);
+}
+body.has-collapsible-sidebar .brand{
+  min-height:34px;
+  padding-right:42px;
+  font-size:25px;
+  text-overflow:clip;
+  transition:opacity .18s ease;
+}
+body.has-collapsible-sidebar .brand-sub{
+  display:block;
+  min-height:18px;
+  margin:5px 42px 20px 0;
+  overflow:hidden;
+  color:var(--app-muted);
+  text-overflow:ellipsis;
+}
+body.has-collapsible-sidebar .sidebar .nav{
+  width:100%;
+  min-width:0;
+  max-width:none;
+  display:flex;
+  flex:1 1 auto;
+  flex-direction:column;
+  align-items:stretch;
+  gap:5px;
+  padding:4px 0 10px;
+  overflow-x:hidden;
+  overflow-y:auto;
+  white-space:normal;
+  scrollbar-width:thin;
+}
+body.has-collapsible-sidebar .sidebar .nav a{
+  width:100%;
+  min-width:0;
+  min-height:44px;
+  display:grid;
+  grid-template-columns:36px minmax(0,1fr);
+  align-items:center;
+  gap:10px;
+  padding:7px 10px;
+  overflow:hidden;
+  border-radius:8px;
+  text-align:left;
+  white-space:nowrap;
+}
+.nav-glyph{
+  width:34px;
+  height:30px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  color:var(--app-primary);
+  background:var(--app-soft);
+  border:1px solid #dfe7d5;
+  border-radius:7px;
+  font-size:10px;
+  font-weight:900;
+  letter-spacing:0;
+}
+.nav-label{
+  min-width:0;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+body.has-collapsible-sidebar .sidebar .nav a.active .nav-glyph{
+  color:#fff;
+  background:rgba(255,255,255,.16);
+  border-color:rgba(255,255,255,.3);
+}
+body.has-collapsible-sidebar .source{
+  position:static;
+  display:block;
+  margin-top:auto;
+  padding-top:14px;
+  color:var(--app-muted);
+  border-top:1px solid var(--app-line);
+  font-size:10px;
+  line-height:1.45;
+}
+.sidebar-toggle,.mobile-nav-toggle{
+  width:38px;
+  height:38px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  padding:0;
+  color:var(--app-primary);
+  background:#f7f9f3;
+  border:1px solid var(--app-line-strong);
+  border-radius:8px;
+  cursor:pointer;
+}
+.sidebar-toggle{
+  position:absolute;
+  top:20px;
+  right:14px;
+}
+.sidebar-toggle>span,.mobile-nav-toggle>span{
+  width:17px;
+  display:grid;
+  gap:3px;
+}
+.sidebar-toggle i,.mobile-nav-toggle i{
+  width:100%;
+  height:2px;
+  display:block;
+  background:currentColor;
+  border-radius:2px;
+}
+.sidebar-toggle:hover,.mobile-nav-toggle:hover{
+  background:var(--app-soft);
+  border-color:#cbd7bc;
+}
+.mobile-nav-toggle,.sidebar-overlay{display:none}
+body.has-collapsible-sidebar .main{
+  width:min(1440px,100%);
+  min-width:0;
+  margin:0 auto;
+}
+body.has-collapsible-sidebar.sidebar-collapsed .brand{
+  padding:0;
+  font-size:0;
+  text-align:center;
+}
+body.has-collapsible-sidebar.sidebar-collapsed .brand::after{
+  content:'AF';
+  display:block;
+  font-family:var(--font-display);
+  font-size:22px;
+  color:var(--app-primary);
+}
+body.has-collapsible-sidebar.sidebar-collapsed .brand-sub,
+body.has-collapsible-sidebar.sidebar-collapsed .source{
+  display:none;
+}
+body.has-collapsible-sidebar.sidebar-collapsed .sidebar{
+  padding-inline:12px;
+}
+body.has-collapsible-sidebar.sidebar-collapsed .sidebar-toggle{
+  position:static;
+  flex:0 0 auto;
+  margin:8px auto 18px;
+}
+body.has-collapsible-sidebar.sidebar-collapsed .sidebar .nav a{
+  grid-template-columns:1fr;
+  justify-items:center;
+  padding-inline:8px;
+}
+body.has-collapsible-sidebar.sidebar-collapsed .nav-label{display:none}
+
+@media(max-width:960px){
+  body.has-collapsible-sidebar .shell,
+  body.has-collapsible-sidebar.sidebar-collapsed .shell{
+    display:block;
+    min-height:100vh;
+  }
+  body.has-collapsible-sidebar .sidebar{
+    position:fixed;
+    inset:0 auto 0 0;
+    z-index:120;
+    width:min(320px,86vw);
+    height:100dvh;
+    min-height:100dvh;
+    padding:24px 16px 18px;
+    transform:translateX(-104%);
+    transition:transform .22s ease;
+  }
+  body.has-collapsible-sidebar.sidebar-mobile-open .sidebar{
+    transform:translateX(0);
+  }
+  body.has-collapsible-sidebar .sidebar-toggle{
+    display:inline-flex;
+  }
+  body.has-collapsible-sidebar .mobile-nav-toggle{
+    position:fixed;
+    top:12px;
+    left:12px;
+    z-index:110;
+    display:inline-flex;
+    box-shadow:var(--app-shadow-sm);
+  }
+  body.has-collapsible-sidebar.sidebar-mobile-open .mobile-nav-toggle{
+    opacity:0;
+    pointer-events:none;
+  }
+  body.has-collapsible-sidebar .sidebar-overlay{
+    position:fixed;
+    inset:0;
+    z-index:115;
+    width:100%;
+    height:100%;
+    padding:0;
+    background:rgba(18,24,13,.36);
+    border:0;
+    opacity:0;
+    pointer-events:none;
+    transition:opacity .2s ease;
+  }
+  body.has-collapsible-sidebar.sidebar-mobile-open .sidebar-overlay{
+    display:block;
+    opacity:1;
+    pointer-events:auto;
+  }
+  body.has-collapsible-sidebar .main{
+    width:100%;
+    padding-top:72px;
+  }
+}
+
+@media(prefers-reduced-motion:reduce){
+  body.has-collapsible-sidebar .shell,
+  body.has-collapsible-sidebar .sidebar,
+  body.has-collapsible-sidebar .sidebar-overlay{
+    transition:none;
+  }
+}
