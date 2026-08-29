@@ -1,5 +1,7 @@
 const SPREADSHEET_ID = '1QogpATp_-37gz23PAapTVsNHYNzo3XnnbFxflb0xKYo';
 const QUALITY_CUTOVER_DATE = '2026-08-20';
+const FACTURAS_DRIVE_FOLDER_ID = '';
+const FACTURAS_DRIVE_FOLDER_NAME = 'Altitud Flowers - Facturas';
 const HEADERS_BY_SHEET = {
   USUARIOS: ['id_usuario','nombre','correo','rol','estado','fecha_registro'],
   PRODUCCION_CAMPO: ['id_produccion','fecha','semana','siembra','cama','variedad','tallos_cortados','responsable','estado','observaciones','creado_en','origen','lote','turno'],
@@ -12,6 +14,10 @@ const HEADERS_BY_SHEET = {
   VENDEDORES: ['id_vendedor','vendedor','usuario','rol','estado','telefono','email','creado_en','origen'],
   VARIEDADES: ['id_variedad','variedad','color','estado','categoria','observaciones','creado_en','origen'],
   PRECIOS: ['id_precio','variedad','medida_cm','tipo','precio_unitario','moneda','vigente_desde','estado','observaciones','origen'],
+  ESTADO_CUENTA: ['id_movimiento','fecha','cliente','concepto','descripcion','tipo_movimiento','numero_factura','valor_factura','valor_pagado','saldo_pendiente','estado','fecha_vencimiento','vendedor','observacion','url_pdf_factura','fecha_registro'],
+  INGRESOS: ['id_ingreso','fecha','cliente','concepto','numero_factura','valor_ingresado','forma_pago','vendedor','observacion','fecha_registro'],
+  FACTURAS: ['id_factura','fecha_emision','cliente','numero_factura','concepto','valor_total','valor_pagado','saldo_pendiente','estado','fecha_vencimiento','url_pdf_factura','observacion'],
+  PAGOS_CLIENTES: ['id_pago','fecha_pago','cliente','numero_factura','valor_pagado','forma_pago','observacion','fecha_registro'],
   REPORTES: ['fecha','indicador','categoria','valor','unidad','periodo','fuente','observaciones','actualizado_en','origen'],
   CONFIGURACION: ['clave','valor','grupo','descripcion','estado','actualizado_en','origen','usuario','tipo','orden']
 };
@@ -34,6 +40,18 @@ function doGet(e) {
   if (action === 'diagnosticarStockCuartoFrio') {
     return json_(diagnosticarStockCuartoFrio(e.parameter || {}));
   }
+  if (action === 'facturasPendientes') {
+    return json_(listarFacturasFinanzas_().filter(function(row) {
+      const saldo = row.saldo_pendiente !== '' && row.saldo_pendiente !== null && row.saldo_pendiente !== undefined
+        ? row.saldo_pendiente
+        : row.saldo;
+      return String(row.estado || '').toUpperCase() !== 'PAGADO' && normalizarNumero_(saldo) > 0;
+    }));
+  }
+  if (action === 'facturaNumero') {
+    const found = findFacturaFinanzas_(e.parameter.numero_factura || '');
+    return json_({ ok: !!found, factura: found ? found.record : null });
+  }
   return json_({ ok: true, service: 'altitud_flowers_api', sheets: Object.keys(HEADERS_BY_SHEET) });
 }
 
@@ -41,6 +59,15 @@ function doPost(e) {
   try {
     const payload = JSON.parse((e && e.postData && e.postData.contents) || '{}');
     const sheetName = String(payload.sheet || 'VENTAS_VENDEDORES').toUpperCase();
+    if (payload.action === 'registrarFactura') {
+      return json_(registrarFacturaFinanzas_(payload.record || {}, payload.pdf, payload.driveFolderId, payload.user || {}));
+    }
+    if (payload.action === 'registrarPago') {
+      return json_(registrarPagoFinanzas_(payload.record || {}, payload.user || {}));
+    }
+    if (payload.action === 'registrarIngreso') {
+      return json_(registrarIngresoFinanzas_(payload.record || {}, payload.user || {}));
+    }
     if (payload.action === 'deleteRecord') {
       return json_(deleteRecord_(sheetName, payload.idField, payload.idValue, payload.user || {}));
     }
@@ -70,6 +97,307 @@ function doPost(e) {
   }
 }
 
+function registrarFacturaFinanzas_(record, pdf, driveFolderId, user) {
+  validarPermisoFinanzas_(user, ['FACTURAS','ESTADO_CUENTA']);
+  const numeroFactura = String(record.numero_factura || '').trim();
+  const cliente = String(record.cliente || '').trim();
+  const valor = normalizarNumero_(record.valor_factura || record.valor_total);
+  if (!numeroFactura) throw new Error('El numero de factura es obligatorio.');
+  if (!cliente) throw new Error('El cliente es obligatorio.');
+  if (valor <= 0) throw new Error('El valor de la factura debe ser mayor a cero.');
+  if (findFacturaFinanzas_(numeroFactura)) throw new Error('Ya existe la factura ' + numeroFactura + '.');
+
+  const urlPdf = pdf && pdf.data
+    ? subirPdfFacturaFinanzas_(pdf, driveFolderId).url
+    : String(record.url_pdf_factura || '');
+  const pagado = Math.max(0, normalizarNumero_(record.valor_pagado));
+  const saldo = Math.max(0, valor - pagado);
+  const estado = calcularEstadoFactura_(valor, saldo, record.fecha_vencimiento);
+  const now = record.fecha_registro || new Date().toISOString();
+  const factura = {
+    id_factura: record.id_factura || financeId_('FAC'),
+    fecha_emision: record.fecha_emision || record.fecha,
+    cliente: cliente,
+    numero_factura: numeroFactura,
+    concepto: record.concepto || 'Ventas de flor',
+    valor_total: valor,
+    valor_pagado: pagado,
+    saldo_pendiente: saldo,
+    estado: estado,
+    fecha_vencimiento: record.fecha_vencimiento || '',
+    url_pdf_factura: urlPdf,
+    observacion: record.observacion || ''
+  };
+  const movimiento = {
+    id_movimiento: record.id_movimiento || financeId_('EC'),
+    fecha: factura.fecha_emision,
+    cliente: cliente,
+    concepto: factura.concepto,
+    descripcion: record.descripcion || factura.concepto,
+    tipo_movimiento: 'FACTURA',
+    numero_factura: numeroFactura,
+    valor_factura: valor,
+    valor_pagado: pagado,
+    saldo_pendiente: saldo,
+    estado: estado,
+    fecha_vencimiento: factura.fecha_vencimiento,
+    vendedor: record.vendedor || '',
+    observacion: factura.observacion,
+    url_pdf_factura: urlPdf,
+    fecha_registro: now
+  };
+  appendFinanceRecord_('FACTURAS', factura);
+  appendFinanceRecord_('ESTADO_CUENTA', movimiento);
+  return { ok: true, factura: factura, movimiento: movimiento };
+}
+
+function registrarPagoFinanzas_(record, user) {
+  validarPermisoFinanzas_(user, ['FACTURAS','PAGOS_CLIENTES','INGRESOS','ESTADO_CUENTA']);
+  const lock = LockService.getScriptLock();
+  lock.waitLock(30000);
+  try {
+    const numeroFactura = String(record.numero_factura || '').trim();
+    const found = findFacturaFinanzas_(numeroFactura);
+    if (!found) throw new Error('No se encontro la factura ' + numeroFactura + '.');
+
+    const factura = found.record;
+    const valorTotal = normalizarNumero_(factura.valor_total || factura.valor_factura);
+    const saldoGuardado = factura.saldo_pendiente !== '' && factura.saldo_pendiente !== null && factura.saldo_pendiente !== undefined
+      ? factura.saldo_pendiente
+      : factura.saldo;
+    const pagadoRegistrado = normalizarNumero_(factura.valor_pagado);
+    const saldoActual = String(factura.estado || '').toUpperCase() === 'PAGADO'
+      ? 0
+      : saldoGuardado === '' || saldoGuardado === null || saldoGuardado === undefined
+        ? Math.max(0, valorTotal - pagadoRegistrado)
+        : Math.max(0, Math.min(valorTotal, normalizarNumero_(saldoGuardado)));
+    const pagadoAnterior = Math.max(pagadoRegistrado, Math.max(0, valorTotal - saldoActual));
+    if (saldoActual <= 0) throw new Error('La factura ' + numeroFactura + ' ya esta pagada.');
+
+    const tipo = String(record.tipo_movimiento || 'ABONO').toUpperCase();
+    const solicitado = normalizarNumero_(record.valor_pagado || record.valor_ingresado);
+    const valorPago = tipo === 'PAGO_TOTAL' ? saldoActual : solicitado;
+    if (valorPago <= 0) throw new Error('El valor pagado debe ser mayor a cero.');
+    if (valorPago > saldoActual) throw new Error('El pago supera el saldo pendiente de ' + saldoActual + '.');
+
+    const nuevoPagado = Math.min(valorTotal, pagadoAnterior + valorPago);
+    const nuevoSaldo = Math.max(0, valorTotal - nuevoPagado);
+    const nuevoEstado = calcularEstadoFactura_(valorTotal, nuevoSaldo, factura.fecha_vencimiento);
+    updateFacturaFinanzas_(found, nuevoPagado, nuevoSaldo, nuevoEstado);
+
+    const now = record.fecha_registro || new Date().toISOString();
+    const fechaPago = record.fecha_pago || record.fecha;
+    const cliente = factura.cliente;
+    const pago = {
+      id_pago: record.id_pago || financeId_('PAG'),
+      fecha_pago: fechaPago,
+      cliente: cliente,
+      numero_factura: numeroFactura,
+      valor_pagado: valorPago,
+      forma_pago: record.forma_pago || '',
+      observacion: record.observacion || '',
+      fecha_registro: now
+    };
+    const ingreso = {
+      id_ingreso: record.id_ingreso || financeId_('ING'),
+      fecha: fechaPago,
+      cliente: cliente,
+      concepto: tipo === 'PAGO_TOTAL' ? 'Pagos completos' : 'Abonos de clientes',
+      numero_factura: numeroFactura,
+      valor_ingresado: valorPago,
+      forma_pago: pago.forma_pago,
+      vendedor: record.vendedor || '',
+      observacion: pago.observacion,
+      fecha_registro: now
+    };
+    const movimiento = {
+      id_movimiento: record.id_movimiento || financeId_('EC'),
+      fecha: fechaPago,
+      cliente: cliente,
+      concepto: ingreso.concepto,
+      descripcion: pago.observacion,
+      tipo_movimiento: tipo,
+      numero_factura: numeroFactura,
+      valor_factura: valorTotal,
+      valor_pagado: valorPago,
+      saldo_pendiente: nuevoSaldo,
+      estado: nuevoEstado,
+      fecha_vencimiento: factura.fecha_vencimiento || '',
+      vendedor: record.vendedor || '',
+      observacion: pago.observacion,
+      url_pdf_factura: factura.url_pdf_factura || '',
+      fecha_registro: now
+    };
+    appendFinanceRecord_('PAGOS_CLIENTES', pago);
+    appendFinanceRecord_('INGRESOS', ingreso);
+    appendFinanceRecord_('ESTADO_CUENTA', movimiento);
+    return { ok: true, pago: pago, ingreso: ingreso, movimiento: movimiento };
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function registrarIngresoFinanzas_(record, user) {
+  validarPermisoFinanzas_(user, ['INGRESOS','ESTADO_CUENTA']);
+  const valor = normalizarNumero_(record.valor_ingresado || record.valor_pagado);
+  if (valor <= 0) throw new Error('El valor ingresado debe ser mayor a cero.');
+  const now = record.fecha_registro || new Date().toISOString();
+  const ingreso = {
+    id_ingreso: record.id_ingreso || financeId_('ING'),
+    fecha: record.fecha || record.fecha_pago,
+    cliente: record.cliente || '',
+    concepto: record.concepto || 'Otros ingresos',
+    numero_factura: record.numero_factura || '',
+    valor_ingresado: valor,
+    forma_pago: record.forma_pago || '',
+    vendedor: record.vendedor || '',
+    observacion: record.observacion || '',
+    fecha_registro: now
+  };
+  const movimiento = {
+    id_movimiento: record.id_movimiento || financeId_('EC'),
+    fecha: ingreso.fecha,
+    cliente: ingreso.cliente,
+    concepto: ingreso.concepto,
+    descripcion: ingreso.observacion,
+    tipo_movimiento: 'OTRO_INGRESO',
+    numero_factura: ingreso.numero_factura,
+    valor_factura: 0,
+    valor_pagado: valor,
+    saldo_pendiente: 0,
+    estado: 'PAGADO',
+    fecha_vencimiento: '',
+    vendedor: ingreso.vendedor,
+    observacion: ingreso.observacion,
+    url_pdf_factura: '',
+    fecha_registro: now
+  };
+  appendFinanceRecord_('INGRESOS', ingreso);
+  appendFinanceRecord_('ESTADO_CUENTA', movimiento);
+  return { ok: true, ingreso: ingreso, movimiento: movimiento };
+}
+
+function validarPermisoFinanzas_(user, sheets) {
+  const role = getRole_(user || {});
+  sheets.forEach(function(sheetName) {
+    if (!canWrite_(role, sheetName)) throw new Error('Rol sin permiso para escribir en ' + sheetName);
+  });
+}
+
+function findFacturaFinanzas_(numeroFactura) {
+  return findFacturaEnHojaFinanzas_('FACTURAS', numeroFactura)
+    || findFacturaEnHojaFinanzas_('ESTADO_CUENTA', numeroFactura);
+}
+
+function findFacturaEnHojaFinanzas_(sheetName, numeroFactura) {
+  const sheet = getSheet_(sheetName, HEADERS_BY_SHEET[sheetName]);
+  if (sheet.getLastRow() < 2) return null;
+  const values = sheet.getDataRange().getValues();
+  const headers = values.shift().map(function(value) { return String(value || '').trim(); });
+  const numeroIndexes = ['numero_factura','factura']
+    .map(function(header) { return headers.indexOf(header); })
+    .filter(function(index) { return index >= 0; });
+  if (!numeroIndexes.length) return null;
+  const wanted = String(numeroFactura || '').trim().toUpperCase();
+  let candidate = null;
+  for (let index = 0; index < values.length; index++) {
+    const matches = numeroIndexes.some(function(column) {
+      return String(values[index][column] || '').trim().toUpperCase() === wanted;
+    });
+    if (!matches) continue;
+    const record = {};
+    headers.forEach(function(header, column) { record[header] = values[index][column]; });
+    const tipo = String(record.tipo_movimiento || '').toUpperCase();
+    const result = { sheet: sheet, row: index + 2, headers: headers, record: record };
+    if (tipo === 'FACTURA' || (!tipo && normalizarNumero_(record.valor_total || record.valor_factura) > 0)) {
+      candidate = result;
+    }
+  }
+  return candidate;
+}
+
+function listarFacturasFinanzas_() {
+  const facturas = readObjects_('FACTURAS');
+  const historicas = readObjects_('ESTADO_CUENTA').filter(function(row) {
+    const tipo = String(row.tipo_movimiento || '').toUpperCase();
+    return (tipo === 'FACTURA' || !tipo) && (row.numero_factura || row.factura);
+  });
+  return historicas.concat(facturas);
+}
+
+function updateFacturaFinanzas_(found, valorPagado, saldo, estado) {
+  const updates = {
+    valor_pagado: valorPagado,
+    saldo_pendiente: saldo,
+    saldo: saldo,
+    estado: estado
+  };
+  Object.keys(updates).forEach(function(header) {
+    const column = found.headers.indexOf(header) + 1;
+    if (column > 0) found.sheet.getRange(found.row, column).setValue(updates[header]);
+  });
+}
+
+function appendFinanceRecord_(sheetName, record) {
+  const desiredHeaders = HEADERS_BY_SHEET[sheetName];
+  const sheet = getSheet_(sheetName, desiredHeaders);
+  const headers = getWritableHeaders_(sheet, desiredHeaders);
+  const writableRecord = Object.assign({}, record);
+  if (sheetName === 'ESTADO_CUENTA') {
+    writableRecord.factura = writableRecord.factura || writableRecord.numero_factura;
+    writableRecord.saldo = writableRecord.saldo === undefined ? writableRecord.saldo_pendiente : writableRecord.saldo;
+    writableRecord.fecha_emision = writableRecord.fecha_emision || writableRecord.fecha;
+    writableRecord.observaciones = writableRecord.observaciones || writableRecord.observacion;
+  }
+  sheet.appendRow(headers.map(function(header) { return normalizeValue_(writableRecord[header]); }));
+}
+
+function calcularEstadoFactura_(valorTotal, saldo, fechaVencimiento) {
+  if (saldo <= 0) return 'PAGADO';
+  const today = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'yyyy-MM-dd');
+  let vencimiento = fechaVencimiento;
+  if (fechaVencimiento instanceof Date) {
+    vencimiento = Utilities.formatDate(fechaVencimiento, Session.getScriptTimeZone(), 'yyyy-MM-dd');
+  }
+  if (vencimiento && String(vencimiento).slice(0, 10) < today) return 'VENCIDO';
+  if (saldo >= valorTotal) return 'PENDIENTE';
+  return 'ABONADO';
+}
+
+function subirPdfFacturaFinanzas_(pdf, driveFolderId) {
+  const folder = obtenerCarpetaFacturas_(driveFolderId);
+  const bytes = Utilities.base64Decode(pdf.data);
+  const blob = Utilities.newBlob(bytes, pdf.mimeType || 'application/pdf', pdf.name || ('factura_' + Date.now() + '.pdf'));
+  const file = folder.createFile(blob);
+  return { id: file.getId(), url: file.getUrl(), name: file.getName(), folderId: folder.getId() };
+}
+
+function obtenerCarpetaFacturas_(driveFolderId) {
+  const properties = PropertiesService.getScriptProperties();
+  const candidates = [
+    String(driveFolderId || '').trim(),
+    String(FACTURAS_DRIVE_FOLDER_ID || '').trim(),
+    String(properties.getProperty('FACTURAS_DRIVE_FOLDER_ID') || '').trim()
+  ].filter(Boolean);
+  for (let index = 0; index < candidates.length; index++) {
+    try {
+      const folder = DriveApp.getFolderById(candidates[index]);
+      properties.setProperty('FACTURAS_DRIVE_FOLDER_ID', folder.getId());
+      return folder;
+    } catch (err) {
+      // Continue with the next configured folder before creating a new one.
+    }
+  }
+  const folders = DriveApp.getFoldersByName(FACTURAS_DRIVE_FOLDER_NAME);
+  const folder = folders.hasNext() ? folders.next() : DriveApp.createFolder(FACTURAS_DRIVE_FOLDER_NAME);
+  properties.setProperty('FACTURAS_DRIVE_FOLDER_ID', folder.getId());
+  return folder;
+}
+
+function financeId_(prefix) {
+  return prefix + '-' + Date.now() + '-' + Math.floor(Math.random() * 1000);
+}
+
 function getRole_(user) {
   const email = String(user.correo || Session.getActiveUser().getEmail() || '').toLowerCase();
   const spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
@@ -96,7 +424,7 @@ function canWrite_(role, sheetName) {
 
 
 function findRowById_(sheet, headers, record) {
-  const idFields = ['id_control_calidad','id_produccion','id_poscosecha','id_rendimiento','id_venta','id_cliente'];
+  const idFields = ['id_control_calidad','id_produccion','id_poscosecha','id_rendimiento','id_venta','id_cliente','id_movimiento','id_factura','id_pago','id_ingreso'];
   const idField = idFields.find(function(field) { return headers.indexOf(field) >= 0 && record[field]; });
   if (!idField) return -1;
   const idColumn = headers.indexOf(idField) + 1;
