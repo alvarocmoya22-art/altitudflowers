@@ -12,6 +12,16 @@ let qualitySalesRows = [];
 let selectedQualityGroupKey = '';
 let editingQualityId = '';
 
+function setQualitySaveStatus(message, state = '') {
+  const element = $('qSaveStatus');
+  if (element) {
+    element.hidden = !message;
+    element.textContent = message;
+    element.dataset.state = state;
+  }
+  if (message) setStatus(message);
+}
+
 function qualityPosId(row) {
   return text(row.id_poscosecha);
 }
@@ -179,11 +189,13 @@ function clearQualityForm() {
     $(measure.input).value = '';
     $(measure.label).textContent = 'de 0';
   });
+  setQualitySaveStatus('');
   updateQualityTotals();
 }
 
 function openQualityForm(group, controlRow = null, resetAmounts = false) {
   if (!group) return;
+  setQualitySaveStatus('');
   selectedQualityGroupKey = group.key;
   editingQualityId = controlRow ? qualityRowId(controlRow) : '';
   $('qualityFields').disabled = false;
@@ -286,8 +298,8 @@ async function reloadQualityData() {
 }
 
 async function verifyQualitySaved(id) {
-  for (let attempt = 0; attempt < 7; attempt += 1) {
-    await new Promise(resolve => setTimeout(resolve, 900));
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    await new Promise(resolve => setTimeout(resolve, 1200 * (attempt + 1)));
     try {
       const rows = await loadSheet(ALTITUD.sheets.controlCalidad);
       if (normalizeQuality(rows).some(row => qualityRowId(row) === id)) return rows;
@@ -369,20 +381,32 @@ async function initControlCalidad() {
       return;
     }
 
-    $('qSave').disabled = true;
-    setStatus('Guardando control diario y verificando Sheets...');
+    const saveButton = $('qSave');
+    const originalButtonText = saveButton.textContent;
+    saveButton.disabled = true;
+    saveButton.setAttribute('aria-busy', 'true');
+    saveButton.textContent = editingQualityId ? 'Actualizando...' : 'Liberando...';
+    setQualitySaveStatus('Guardando y liberando el inventario. No cierres esta ventana...', 'working');
     try {
-      await submitRecord(ALTITUD.sheets.controlCalidad, record);
-      const verifiedRows = await verifyQualitySaved(record.id_control_calidad);
-      if (!verifiedRows) throw new Error('No se verifico el registro');
-      qualityRows = verifiedRows;
+      const result = await submitRecord(ALTITUD.sheets.controlCalidad, record);
+      if (!result || result.ok !== true) throw new Error('Apps Script no confirmo el guardado');
+      qualityRows = nextRows;
       renderQuality();
       clearQualityForm();
-      setStatus(`${record.estado_calidad}: ${fmtInt(record.tallos_aprobados)} tallos liberados a cuarto frio`);
+      setQualitySaveStatus(`${record.estado_calidad}: ${fmtInt(record.tallos_aprobados)} tallos liberados a cuarto frio`, 'success');
+      void verifyQualitySaved(record.id_control_calidad).then(verifiedRows => {
+        if (!verifiedRows) return;
+        qualityRows = verifiedRows;
+        renderQuality();
+        setQualitySaveStatus(`${record.estado_calidad}: ${fmtInt(record.tallos_aprobados)} tallos liberados y confirmados en Sheets`, 'success');
+      });
     } catch (err) {
-      setStatus('No se confirmo el guardado. Revisa la implementacion de Apps Script');
+      setQualitySaveStatus(`No se pudo liberar el inventario: ${text(err.message) || 'revisa la implementacion de Apps Script'}`, 'error');
     } finally {
-      $('qSave').disabled = false;
+      saveButton.disabled = false;
+      saveButton.removeAttribute('aria-busy');
+      saveButton.textContent = originalButtonText;
+      updateQualityTotals();
     }
   });
 

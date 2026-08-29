@@ -9,10 +9,10 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/estilos.css?v=20260820-sidebar">
   <script src="data/local-data.js?v=20260616-postcosecha"></script>
-  <script src="js/config.js?v=20260820-calidad-diaria"></script>
+  <script src="js/config.js?v=20260828-guardado-confirmado"></script>
   <script src="js/permisos.js?v=20260820-calidad"></script>
   <script src="js/nav.js?v=20260820-sidebar"></script>
-  <script src="js/control-calidad.js?v=20260820-calidad-diaria" defer></script>
+  <script src="js/control-calidad.js?v=20260828-liberacion-rapida" defer></script>
 </head>
 <body data-module="control-calidad" class="module-page module-quality">
   <div class="shell">
@@ -86,6 +86,7 @@
             </div>
 
             <div class="notice quality-warning">Al guardar, solo la cantidad aprobada se suma al stock disponible y queda habilitada para ventas.</div>
+            <div class="quality-save-status" id="qSaveStatus" role="status" aria-live="polite" hidden></div>
             <div class="actions quality-actions">
               <button class="btn" id="qCancel" type="button">Cancelar</button>
               <button class="btn primary" id="qSave" type="submit">Aprobar control</button>

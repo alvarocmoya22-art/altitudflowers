@@ -7,12 +7,13 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/estilos.css?v=20260813-auditoria2" />
+  <link rel="stylesheet" href="css/estilos.css?v=20260820-sidebar" />
   <script src="data/local-data.js?v=20260616-postcosecha"></script>
-  <script src="js/config.js?v=20260819-stock-sync"></script>
-  <script src="js/permisos.js?v=20260622-cliente-stock"></script>
-  <script src="js/nav.js?v=20260622-roles-kpis"></script>
-  <script src="js/estado-cuenta.js?v=20260813-auditoria" defer></script>
+  <script src="js/config.js?v=20260820-calidad"></script>
+  <script src="js/permisos.js?v=20260820-calidad"></script>
+  <script src="js/nav.js?v=20260820-sidebar"></script>
+  <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
+  <script src="js/estado-cuenta.js?v=20260821-pdf-save-confirm2" defer></script>
 </head>
 <body data-module="estado-cuenta">
   <div class="shell">
@@ -60,21 +61,25 @@
         <div class="field"><label for="factConcepto">Concepto</label><select id="factConcepto"><option>Ventas de flor</option><option>Facturas emitidas</option><option>Otros ingresos</option></select></div>
         <div class="field"><label for="factValor">Valor total</label><input id="factValor" type="number" min="0" step="0.01" required></div>
         <div class="field"><label for="factVence">Fecha de vencimiento</label><input id="factVence" type="date"></div>
-        <div class="field wide"><label for="factPdf">PDF de factura</label><input id="factPdf" type="file" accept="application/pdf"></div>
+        <div class="field wide">
+          <label for="factPdf">PDF de factura</label>
+          <input id="factPdf" type="file" accept="application/pdf,.pdf">
+          <small class="message" id="factPdfStatus">Selecciona una factura PDF para completar automaticamente los datos.</small>
+        </div>
         <div class="field wide"><label for="factObs">Observacion</label><input id="factObs"></div>
         <div class="total-box"><span>Saldo pendiente</span><span id="factSaldo">-</span></div>
         <div class="total-box"><span>Estado</span><span id="factEstado">PENDIENTE</span></div>
         <div class="full actions" style="justify-content:space-between">
           <span class="message" id="factMsg">El PDF se guardara en Drive cuando la URL de Apps Script este configurada.</span>
-          <button class="btn primary" type="submit">Guardar factura</button>
+          <button class="btn primary" id="factSubmit" type="submit">Guardar factura</button>
         </div>
       </form>
 
       <form class="card panel form-grid" id="pagoForm">
         <h3>Registro de pago o abono</h3>
         <div class="field"><label for="pagoTipo">Tipo</label><select id="pagoTipo"><option value="ABONO">Abono</option><option value="PAGO_TOTAL">Pago total</option><option value="OTRO_INGRESO">Otro ingreso</option></select></div>
+        <div class="field"><label for="pagoFactura">Numero de factura</label><input id="pagoFactura" list="facturasPendientesList" autocomplete="off" placeholder="Escribe o selecciona una factura"><datalist id="facturasPendientesList"></datalist></div>
         <div class="field"><label for="pagoCliente">Cliente</label><input id="pagoCliente" required></div>
-        <div class="field"><label for="pagoFactura">Numero de factura</label><input id="pagoFactura"></div>
         <div class="field"><label for="pagoValor">Valor pagado</label><input id="pagoValor" type="number" min="0" step="0.01" required></div>
         <div class="field"><label for="pagoFecha">Fecha de pago</label><input id="pagoFecha" type="date" required></div>
         <div class="field"><label for="pagoForma">Forma de pago</label><select id="pagoForma"><option>Transferencia</option><option>Efectivo</option><option>Cheque</option><option>Tarjeta</option><option>Otro</option></select></div>

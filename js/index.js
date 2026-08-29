@@ -1,8 +1,8 @@
 async function initIndex(){
   setStatus('Cargando resumen...');
-  const {processed,sales}=await loadProcessedAndSales();
+  const {processed,quality,sales}=await loadProcessedAndSales();
   const accounts=await loadAccounts();
-  const stock=buildStock(processed,sales);
+  const stock=buildStock(quality,sales);
   const totalProcesado=processed.reduce((a,r)=>a+r.tallos_procesados,0);
   const totalVendido=normalizeSales(sales).reduce((a,r)=>a+r.tallos,0);
   const totalStock=stock.reduce((a,r)=>a+r.stock,0);

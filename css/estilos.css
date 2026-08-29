@@ -1325,6 +1325,10 @@ tbody tr:hover td{
 .quality-result.ok{color:#315c1b}.quality-result.warn{color:#8a6500}.quality-result.bad{color:#a83232}
 .quality-warning{margin-top:0}
 .quality-actions{justify-content:flex-end;margin-top:18px}
+.quality-save-status{margin-top:16px;padding:13px 16px;border:1px solid #dce7d5;border-radius:8px;background:#f2f7ed;color:var(--green-800);font-size:14px;font-weight:800}
+.quality-save-status[data-state="working"]{border-color:#ead69a;background:#fff8e4;color:#6b5300}
+.quality-save-status[data-state="error"]{border-color:#edc3bd;background:#fff1ef;color:#9d2f25}
+.quality-save-status[hidden]{display:none}
 @media(max-width:1180px){.quality-layout{grid-template-columns:1fr}.quality-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:760px){.quality-kpis,.quality-source-grid,.quality-totals{grid-template-columns:1fr 1fr}.quality-measures-grid{grid-template-columns:1fr!important}.quality-actions{flex-direction:column-reverse}.quality-actions .btn{width:100%}}
 @media(max-width:480px){.quality-kpis,.quality-source-grid,.quality-totals{grid-template-columns:1fr}}
