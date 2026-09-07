@@ -282,7 +282,15 @@ function buildQualityRecord() {
 }
 
 function qualityWouldBreakStock(nextRows) {
-  return calculateColdRoomStock(nextRows, qualitySalesRows).porVariedadMedida.some(row => asNumber(row.stockReal) < 0);
+  const currentStock = calculateColdRoomStock(qualityRows, qualitySalesRows).porVariedadMedida;
+  const nextStock = calculateColdRoomStock(nextRows, qualitySalesRows).porVariedadMedida;
+  const currentByKey = new Map(currentStock.map(row => [stockKey(row.variedad, row.medida), asNumber(row.stockReal)]));
+  return nextStock.some(row => {
+    const key = stockKey(row.variedad, row.medida);
+    const before = currentByKey.get(key) ?? 0;
+    const after = asNumber(row.stockReal);
+    return after < 0 && after < before;
+  });
 }
 
 async function reloadQualityData() {
@@ -377,7 +385,7 @@ async function initControlCalidad() {
       ? normalizeQuality(qualityRows).map(row => qualityRowId(row) === editingQualityId ? record : row)
       : [record, ...normalizeQuality(qualityRows)];
     if (qualityWouldBreakStock(nextRows)) {
-      setStatus('No se puede guardar: la cantidad aprobada quedaria por debajo de las ventas existentes');
+      setQualitySaveStatus('No se puede guardar: este cambio reduciria el stock aprobado por debajo de las ventas existentes', 'error');
       return;
     }
 
