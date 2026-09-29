@@ -14,7 +14,7 @@ const HEADERS_BY_SHEET = {
   VENDEDORES: ['id_vendedor','vendedor','usuario','rol','estado','telefono','email','creado_en','origen'],
   VARIEDADES: ['id_variedad','variedad','color','estado','categoria','observaciones','creado_en','origen'],
   PRECIOS: ['id_precio','variedad','medida_cm','tipo','precio_unitario','moneda','vigente_desde','estado','observaciones','origen'],
-  ESTADO_CUENTA: ['id_movimiento','fecha','cliente','concepto','descripcion','tipo_movimiento','numero_factura','valor_factura','valor_pagado','saldo_pendiente','estado','fecha_vencimiento','vendedor','observacion','url_pdf_factura','ids_ventas','tallos_enviados','bunches_enviados','cajas_enviadas','detalle_envio','fecha_registro'],
+  ESTADO_CUENTA: ['id_movimiento','fecha','cliente','concepto','descripcion','tipo_movimiento','numero_factura','valor_factura','valor_pagado','saldo_pendiente','estado','fecha_vencimiento','vendedor','observacion','url_pdf_factura','ruc_cedula','nota_credito','dias_vencido','ids_ventas','tallos_enviados','bunches_enviados','cajas_enviadas','detalle_envio','fecha_registro'],
   INGRESOS: ['id_ingreso','fecha','cliente','concepto','numero_factura','valor_ingresado','forma_pago','vendedor','observacion','fecha_registro'],
   FACTURAS: ['id_factura','fecha_emision','cliente','numero_factura','concepto','valor_total','valor_pagado','saldo_pendiente','estado','fecha_vencimiento','url_pdf_factura','ids_ventas','tallos_enviados','bunches_enviados','cajas_enviadas','detalle_envio','observacion'],
   PAGOS_CLIENTES: ['id_pago','fecha_pago','cliente','numero_factura','valor_pagado','forma_pago','observacion','fecha_registro'],
@@ -84,7 +84,16 @@ function doPost(e) {
       eliminarControlCalidadDePoscosecha_(record.id_poscosecha);
     }
     if (existingRow > 1) {
-      sheet.getRange(existingRow, 1, 1, writeHeaders.length).setValues([writeHeaders.map(header => normalizeValue_(record[header]))]);
+      // Solo se pisan las columnas que vienen en el registro. Las demas conservan
+      // lo que ya tenian: si no, cualquier columna que la app no conozca (por
+      // ejemplo ruc_cedula en ESTADO_CUENTA) se borraria en cada edicion.
+      const actuales = sheet.getRange(existingRow, 1, 1, writeHeaders.length).getValues()[0];
+      const fila = writeHeaders.map(function(header, i) {
+        return Object.prototype.hasOwnProperty.call(record, header)
+          ? normalizeValue_(record[header])
+          : actuales[i];
+      });
+      sheet.getRange(existingRow, 1, 1, writeHeaders.length).setValues([fila]);
     } else {
       sheet.appendRow(writeHeaders.map(header => normalizeValue_(record[header])));
     }
