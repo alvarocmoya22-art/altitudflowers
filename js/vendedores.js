@@ -38,11 +38,18 @@ function renderSalesDetail() {
     row => row.variedad,
     row => medidaLabel(row.medida_cm),
     row => fmtInt(row.tallos),
+    row => shipmentPackingLabel(row),
     row => fmtMoney(row.total_venta || row.tallos * row.precio_unitario),
-    row => `<span class="pill ${row.pending ? 'warn' : 'ok'}">${row.pending ? 'LOCAL' : row.estado}</span>`,
+    row => row.pending
+      ? '<span class="pill warn">LOCAL</span>'
+      : row.numero_factura
+        ? `<span class="pill ok">FACTURA ${row.numero_factura}</span>`
+        : '<span class="pill warn">PENDIENTE</span>',
     row => row.pending
       ? `<button class="btn small" type="button" data-retry-sale="${saleId(row)}">Reintentar</button> <button class="btn danger small" type="button" data-delete-pending="${saleId(row)}">Descartar</button>`
-      : `<button class="btn danger small" type="button" data-delete-sale="${saleId(row)}">Eliminar</button>`
+      : row.numero_factura
+        ? '<span class="message">Vinculada</span>'
+        : `<button class="btn danger small" type="button" data-delete-sale="${saleId(row)}">Eliminar</button>`
   ]);
 }
 
@@ -84,6 +91,17 @@ function syncTallosFromBunches() {
   if (bunches > 0) $('saleTallos').value = bunches * (ALTITUD.tallosPorBunch || 10);
 }
 
+function syncSalePacking() {
+  const packing = shipmentPacking({
+    medida_cm: $('saleMedida').value,
+    tallos: $('saleTallos').value,
+    bunches: $('saleBunches').value,
+    tipo_caja: $('saleTipoCaja').value
+  });
+  $('saleCapacity').value = packing.bunchesPorCaja;
+  $('saleCajas').value = packing.cajasEnviadas || '';
+}
+
 function stockMessage(variedad, medida, tallos) {
   const row = getStockForSale(stockData, variedad, medida);
   const other = otherMeasureSuggestions(stockData, variedad, medida);
@@ -108,6 +126,14 @@ function updatePreview() {
   const disponible = currentStock(variedad, medida);
   $('saleDisponible').textContent = fmtInt(disponible);
   $('saleTotal').textContent = fmtMoney(tallos * precio);
+  $('salePacking').textContent = shipmentPackingLabel({
+    medida_cm: medida,
+    tallos,
+    bunches: $('saleBunches').value,
+    tipo_caja: $('saleTipoCaja').value,
+    bunches_por_caja: $('saleCapacity').value,
+    cajas_enviadas: $('saleCajas').value
+  });
   const msg = $('saleMessage');
   msg.textContent = stockMessage(variedad, medida, tallos);
   msg.style.color = tallos > disponible || disponible <= 0 ? '#8d2929' : 'var(--muted)';
@@ -137,6 +163,7 @@ function renderVendedores() {
     row => `<span class="pill ${row.estado === 'AGOTADO' || row.estado === 'INCONSISTENCIA' ? 'bad' : row.estado === 'BAJO STOCK' ? 'warn' : 'ok'}">${row.estado}</span>`
   ]);
   fillSaleSelects();
+  syncSalePacking();
   updatePreview();
   renderSalesDetail();
 }
@@ -180,6 +207,12 @@ function buildSaleRecord() {
     tallos,
     precio_unitario: precio,
     total_venta: tallos * precio,
+    tipo_caja: text($('saleTipoCaja').value).toUpperCase(),
+    bunches_por_caja: asNumber($('saleCapacity').value),
+    cajas_enviadas: asNumber($('saleCajas').value),
+    numero_factura: '',
+    estado_facturacion: 'PENDIENTE',
+    facturado_en: '',
     estado: 'VENDIDO',
     observaciones: text($('saleObs').value),
     creado_en: now.toISOString(),
@@ -266,16 +299,27 @@ async function initVendedores() {
   $('refreshBtn')?.addEventListener('click', loadVendedores);
   $('saleVariedad')?.addEventListener('change', () => {
     updateMeasureOptions();
+    syncSalePacking();
     updatePreview();
   });
-  $('saleMedida')?.addEventListener('change', updatePreview);
+  $('saleMedida')?.addEventListener('change', () => {
+    syncSalePacking();
+    updatePreview();
+  });
   $('saleTipo')?.addEventListener('change', () => {
     updateMeasureOptions();
+    syncSalePacking();
     updatePreview();
   });
-  ['saleTallos', 'salePrecio'].forEach(id => $(id)?.addEventListener('input', updatePreview));
+  $('saleTallos')?.addEventListener('input', () => {
+    syncSalePacking();
+    updatePreview();
+  });
+  $('salePrecio')?.addEventListener('input', updatePreview);
+  $('saleCajas')?.addEventListener('input', updatePreview);
   $('saleBunches')?.addEventListener('input', () => {
     syncTallosFromBunches();
+    syncSalePacking();
     updatePreview();
   });
 
@@ -323,8 +367,8 @@ async function initVendedores() {
     const record = buildSaleRecord();
     const row = getStockForSale(stockData, record.variedad, record.medida_cm);
     const msg = $('saleMessage');
-    if (!record.vendedor || !record.cliente || !record.tallos) {
-      msg.textContent = 'Completa vendedor, cliente y tallos.';
+    if (!record.vendedor || !record.cliente || !record.tallos || !record.cajas_enviadas) {
+      msg.textContent = 'Completa vendedor, cliente, tallos y cajas enviadas.';
       msg.style.color = '#8d2929';
       return;
     }
@@ -341,6 +385,7 @@ async function initVendedores() {
     if (saved) {
       $('saleForm').reset();
       updateMeasureOptions();
+      syncSalePacking();
       updatePreview();
     }
   });

@@ -9,14 +9,14 @@ const HEADERS_BY_SHEET = {
   CONTROL_CALIDAD: ['id_control_calidad','clave_control','id_poscosecha','ids_poscosecha','fecha_proceso','fecha_control','semana','variedad','procesadora','procesadoras','registros_procesados','tallos_declarados','tallos_70_aprobados','tallos_60_aprobados','tallos_55_aprobados','tallos_50_aprobados','nacional_aprobado','tallos_aprobados','tallos_rechazados','estado_calidad','controlador','motivo_rechazo','observaciones','creado_en','actualizado_en','origen'],
   RENDIMIENTO_PROCESADORAS: ['id_rendimiento','fecha','semana','procesadora','variedad','medida_cm','bunches','tallos_procesados','horas_trabajadas','tallos_por_hora','bunches_por_hora','observaciones','creado_en','origen','estado','minutos_trabajados'],
   CUARTO_FRIO: ['fecha_corte','variedad','medida_cm','tallos_procesados','tallos_vendidos','stock_disponible','bunches_disponibles','estado_stock','ubicacion','observaciones','actualizado_en','origen'],
-  VENTAS_VENDEDORES: ['id_venta','fecha','hora','vendedor','cliente','variedad','medida_cm','tipo','bunches','tallos','precio_unitario','total_venta','estado','observaciones','creado_en','origen'],
+  VENTAS_VENDEDORES: ['id_venta','fecha','hora','vendedor','cliente','variedad','medida_cm','tipo','bunches','tallos','precio_unitario','total_venta','tipo_caja','bunches_por_caja','cajas_enviadas','numero_factura','estado_facturacion','facturado_en','estado','observaciones','creado_en','origen'],
   CLIENTES: ['id_cliente','cliente','contacto','telefono','email','pais','ciudad','estado','condicion_pago','observaciones','creado_en','origen'],
   VENDEDORES: ['id_vendedor','vendedor','usuario','rol','estado','telefono','email','creado_en','origen'],
   VARIEDADES: ['id_variedad','variedad','color','estado','categoria','observaciones','creado_en','origen'],
   PRECIOS: ['id_precio','variedad','medida_cm','tipo','precio_unitario','moneda','vigente_desde','estado','observaciones','origen'],
-  ESTADO_CUENTA: ['id_movimiento','fecha','cliente','concepto','descripcion','tipo_movimiento','numero_factura','valor_factura','valor_pagado','saldo_pendiente','estado','fecha_vencimiento','vendedor','observacion','url_pdf_factura','fecha_registro'],
+  ESTADO_CUENTA: ['id_movimiento','fecha','cliente','concepto','descripcion','tipo_movimiento','numero_factura','valor_factura','valor_pagado','saldo_pendiente','estado','fecha_vencimiento','vendedor','observacion','url_pdf_factura','ids_ventas','tallos_enviados','bunches_enviados','cajas_enviadas','detalle_envio','fecha_registro'],
   INGRESOS: ['id_ingreso','fecha','cliente','concepto','numero_factura','valor_ingresado','forma_pago','vendedor','observacion','fecha_registro'],
-  FACTURAS: ['id_factura','fecha_emision','cliente','numero_factura','concepto','valor_total','valor_pagado','saldo_pendiente','estado','fecha_vencimiento','url_pdf_factura','observacion'],
+  FACTURAS: ['id_factura','fecha_emision','cliente','numero_factura','concepto','valor_total','valor_pagado','saldo_pendiente','estado','fecha_vencimiento','url_pdf_factura','ids_ventas','tallos_enviados','bunches_enviados','cajas_enviadas','detalle_envio','observacion'],
   PAGOS_CLIENTES: ['id_pago','fecha_pago','cliente','numero_factura','valor_pagado','forma_pago','observacion','fecha_registro'],
   REPORTES: ['fecha','indicador','categoria','valor','unidad','periodo','fuente','observaciones','actualizado_en','origen'],
   CONFIGURACION: ['clave','valor','grupo','descripcion','estado','actualizado_en','origen','usuario','tipo','orden']
@@ -99,56 +99,139 @@ function doPost(e) {
 
 function registrarFacturaFinanzas_(record, pdf, driveFolderId, user) {
   validarPermisoFinanzas_(user, ['FACTURAS','ESTADO_CUENTA']);
-  const numeroFactura = String(record.numero_factura || '').trim();
-  const cliente = String(record.cliente || '').trim();
-  const valor = normalizarNumero_(record.valor_factura || record.valor_total);
-  if (!numeroFactura) throw new Error('El numero de factura es obligatorio.');
-  if (!cliente) throw new Error('El cliente es obligatorio.');
-  if (valor <= 0) throw new Error('El valor de la factura debe ser mayor a cero.');
-  if (findFacturaFinanzas_(numeroFactura)) throw new Error('Ya existe la factura ' + numeroFactura + '.');
+  const lock = LockService.getScriptLock();
+  lock.waitLock(30000);
+  try {
+    const numeroFactura = String(record.numero_factura || '').trim();
+    const cliente = String(record.cliente || '').trim();
+    const valor = normalizarNumero_(record.valor_factura || record.valor_total);
+    if (!numeroFactura) throw new Error('El numero de factura es obligatorio.');
+    if (!cliente) throw new Error('El cliente es obligatorio.');
+    if (valor <= 0) throw new Error('El valor de la factura debe ser mayor a cero.');
+    if (findFacturaFinanzas_(numeroFactura)) throw new Error('Ya existe la factura ' + numeroFactura + '.');
 
-  const urlPdf = pdf && pdf.data
-    ? subirPdfFacturaFinanzas_(pdf, driveFolderId).url
-    : String(record.url_pdf_factura || '');
-  const pagado = Math.max(0, normalizarNumero_(record.valor_pagado));
-  const saldo = Math.max(0, valor - pagado);
-  const estado = calcularEstadoFactura_(valor, saldo, record.fecha_vencimiento);
-  const now = record.fecha_registro || new Date().toISOString();
-  const factura = {
-    id_factura: record.id_factura || financeId_('FAC'),
-    fecha_emision: record.fecha_emision || record.fecha,
-    cliente: cliente,
-    numero_factura: numeroFactura,
-    concepto: record.concepto || 'Ventas de flor',
-    valor_total: valor,
-    valor_pagado: pagado,
-    saldo_pendiente: saldo,
-    estado: estado,
-    fecha_vencimiento: record.fecha_vencimiento || '',
-    url_pdf_factura: urlPdf,
-    observacion: record.observacion || ''
-  };
-  const movimiento = {
-    id_movimiento: record.id_movimiento || financeId_('EC'),
-    fecha: factura.fecha_emision,
-    cliente: cliente,
-    concepto: factura.concepto,
-    descripcion: record.descripcion || factura.concepto,
-    tipo_movimiento: 'FACTURA',
-    numero_factura: numeroFactura,
-    valor_factura: valor,
-    valor_pagado: pagado,
-    saldo_pendiente: saldo,
-    estado: estado,
-    fecha_vencimiento: factura.fecha_vencimiento,
-    vendedor: record.vendedor || '',
-    observacion: factura.observacion,
-    url_pdf_factura: urlPdf,
-    fecha_registro: now
-  };
-  appendFinanceRecord_('FACTURAS', factura);
-  appendFinanceRecord_('ESTADO_CUENTA', movimiento);
-  return { ok: true, factura: factura, movimiento: movimiento };
+    const idsSolicitados = String(record.ids_ventas || '').split('|').map(function(id) { return String(id || '').trim(); }).filter(Boolean);
+    const ventasSeleccionadas = buscarVentasParaFactura_(idsSolicitados);
+    const envio = resumirVentasParaFactura_(ventasSeleccionadas);
+    const idsVentas = ventasSeleccionadas.map(function(item) { return String(item.record.id_venta); }).join('|');
+    const detalleEnvio = ventasSeleccionadas.map(function(item) {
+      const sale = item.record;
+      const packing = empaqueVenta_(sale);
+      return [sale.fecha, sale.variedad, sale.medida_cm, normalizarNumero_(sale.tallos) + ' tallos', packing.cajas + ' cajas'].join(' ');
+    }).join(' | ');
+    const urlPdf = pdf && pdf.data
+      ? subirPdfFacturaFinanzas_(pdf, driveFolderId).url
+      : String(record.url_pdf_factura || '');
+    const pagado = Math.max(0, normalizarNumero_(record.valor_pagado));
+    const saldo = Math.max(0, valor - pagado);
+    const estado = calcularEstadoFactura_(valor, saldo, record.fecha_vencimiento);
+    const now = record.fecha_registro || new Date().toISOString();
+    const factura = {
+      id_factura: record.id_factura || financeId_('FAC'),
+      fecha_emision: record.fecha_emision || record.fecha,
+      cliente: cliente,
+      numero_factura: numeroFactura,
+      concepto: record.concepto || 'Ventas de flor',
+      valor_total: valor,
+      valor_pagado: pagado,
+      saldo_pendiente: saldo,
+      estado: estado,
+      fecha_vencimiento: record.fecha_vencimiento || '',
+      url_pdf_factura: urlPdf,
+      ids_ventas: idsVentas,
+      tallos_enviados: envio.tallos,
+      bunches_enviados: envio.bunches,
+      cajas_enviadas: envio.cajas,
+      detalle_envio: detalleEnvio || String(record.detalle_envio || ''),
+      observacion: record.observacion || ''
+    };
+    const movimiento = {
+      id_movimiento: record.id_movimiento || financeId_('EC'),
+      fecha: factura.fecha_emision,
+      cliente: cliente,
+      concepto: factura.concepto,
+      descripcion: record.descripcion || factura.concepto,
+      tipo_movimiento: 'FACTURA',
+      numero_factura: numeroFactura,
+      valor_factura: valor,
+      valor_pagado: pagado,
+      saldo_pendiente: saldo,
+      estado: estado,
+      fecha_vencimiento: factura.fecha_vencimiento,
+      vendedor: record.vendedor || '',
+      observacion: factura.observacion,
+      url_pdf_factura: urlPdf,
+      ids_ventas: idsVentas,
+      tallos_enviados: envio.tallos,
+      bunches_enviados: envio.bunches,
+      cajas_enviadas: envio.cajas,
+      detalle_envio: factura.detalle_envio,
+      fecha_registro: now
+    };
+    appendFinanceRecord_('FACTURAS', factura);
+    appendFinanceRecord_('ESTADO_CUENTA', movimiento);
+    vincularVentasConFactura_(ventasSeleccionadas, numeroFactura, now);
+    return { ok: true, factura: factura, movimiento: movimiento, ventasVinculadas: ventasSeleccionadas.length };
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function buscarVentasParaFactura_(ids) {
+  if (!ids.length) return [];
+  const sheet = getSheet_('VENTAS_VENDEDORES', HEADERS_BY_SHEET.VENTAS_VENDEDORES);
+  const headers = getWritableHeaders_(sheet, HEADERS_BY_SHEET.VENTAS_VENDEDORES);
+  const values = sheet.getLastRow() > 1 ? sheet.getRange(2, 1, sheet.getLastRow() - 1, headers.length).getValues() : [];
+  const idIndex = headers.indexOf('id_venta');
+  const wanted = {};
+  ids.forEach(function(id) { wanted[String(id)] = true; });
+  const found = [];
+  values.forEach(function(row, index) {
+    const id = String(row[idIndex] || '');
+    if (!wanted[id]) return;
+    const sale = {};
+    headers.forEach(function(header, column) { sale[header] = row[column]; });
+    const linkedInvoice = String(sale.numero_factura || '').trim();
+    if (linkedInvoice) throw new Error('La venta ' + id + ' ya esta vinculada con la factura ' + linkedInvoice + '.');
+    found.push({ sheet: sheet, headers: headers, row: index + 2, record: sale });
+    delete wanted[id];
+  });
+  const missing = Object.keys(wanted);
+  if (missing.length) throw new Error('No se encontraron las ventas seleccionadas: ' + missing.join(', ') + '.');
+  return found;
+}
+
+function empaqueVenta_(sale) {
+  const medida = String(sale.medida_cm || sale.medida || '').replace(/\D/g, '') || 'NACIONAL';
+  const tallos = Math.max(0, normalizarNumero_(sale.tallos));
+  const bunches = Math.max(0, normalizarNumero_(sale.bunches) || Math.ceil(tallos / 10));
+  const defaultCapacity = medida === '70' ? 25 : 30;
+  const capacidad = Math.max(1, normalizarNumero_(sale.bunches_por_caja) || defaultCapacity);
+  const cajas = Math.max(0, normalizarNumero_(sale.cajas_enviadas) || Math.ceil(bunches / capacidad));
+  return { tallos: tallos, bunches: bunches, capacidad: capacidad, cajas: cajas };
+}
+
+function resumirVentasParaFactura_(ventas) {
+  return ventas.reduce(function(total, item) {
+    const packing = empaqueVenta_(item.record);
+    total.tallos += packing.tallos;
+    total.bunches += packing.bunches;
+    total.cajas += packing.cajas;
+    return total;
+  }, { tallos: 0, bunches: 0, cajas: 0 });
+}
+
+function vincularVentasConFactura_(ventas, numeroFactura, now) {
+  ventas.forEach(function(item) {
+    const sale = Object.assign({}, item.record, {
+      numero_factura: numeroFactura,
+      estado_facturacion: 'FACTURADO',
+      facturado_en: now
+    });
+    item.sheet.getRange(item.row, 1, 1, item.headers.length).setValues([
+      item.headers.map(function(header) { return normalizeValue_(sale[header]); })
+    ]);
+  });
 }
 
 function registrarPagoFinanzas_(record, user) {
@@ -453,6 +536,11 @@ function deleteRecord_(sheetName, idField, idValue, user) {
   const wanted = String(idValue || '');
   for (let i = values.length - 1; i >= 0; i--) {
     if (String(values[i][0]) === wanted) {
+      if (sheetName === 'VENTAS_VENDEDORES') {
+        const invoiceColumn = writeHeaders.indexOf('numero_factura') + 1;
+        const linkedInvoice = invoiceColumn > 0 ? String(sheet.getRange(i + 2, invoiceColumn).getValue() || '').trim() : '';
+        if (linkedInvoice) throw new Error('No se puede eliminar una venta vinculada con la factura ' + linkedInvoice + '.');
+      }
       sheet.deleteRow(i + 2);
       if (sheetName === 'POSCOSECHA') {
         eliminarRendimientoDePoscosecha_(wanted);
@@ -649,7 +737,9 @@ function getSheet_(sheetName, headers) {
   if (!sheet) {
     sheet = spreadsheet.insertSheet(sheetName);
   }
-  const currentHeaders = sheet.getRange(1, 1, 1, headers.length).getValues()[0];
+  const lastColumn = Math.max(sheet.getLastColumn(), headers.length);
+  const currentHeaders = sheet.getRange(1, 1, 1, lastColumn).getValues()[0]
+    .map(function(header) { return String(header || '').trim(); });
   const hasHeaders = currentHeaders.some(value => value);
   if (!hasHeaders) {
     sheet.getRange(1, 1, 1, headers.length).setValues([headers]);

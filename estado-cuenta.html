@@ -7,13 +7,13 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/estilos.css?v=20260820-sidebar" />
+  <link rel="stylesheet" href="css/estilos.css?v=20260910-despachos-facturas" />
   <script src="data/local-data.js?v=20260616-postcosecha"></script>
-  <script src="js/config.js?v=20260820-calidad"></script>
+  <script src="js/config.js?v=20260929-medida-manda"></script>
   <script src="js/permisos.js?v=20260820-calidad"></script>
   <script src="js/nav.js?v=20260820-sidebar"></script>
   <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
-  <script src="js/estado-cuenta.js?v=20260821-pdf-save-confirm2" defer></script>
+  <script src="js/estado-cuenta.js?v=20260910-despachos-facturas" defer></script>
 </head>
 <body data-module="estado-cuenta">
   <div class="shell">
@@ -67,6 +67,22 @@
           <small class="message" id="factPdfStatus">Selecciona una factura PDF para completar automaticamente los datos.</small>
         </div>
         <div class="field wide"><label for="factObs">Observacion</label><input id="factObs"></div>
+        <section class="full invoice-shipments-picker" aria-labelledby="invoiceShipmentsTitle">
+          <div class="section-heading">
+            <div>
+              <h4 id="invoiceShipmentsTitle">Despachos incluidos en la factura</h4>
+              <p>Selecciona las ventas que corresponden a la factura del SRI. Al escribir el cliente se marcan sus despachos pendientes.</p>
+            </div>
+            <button class="btn small" id="selectClientShipmentsBtn" type="button">Seleccionar cliente</button>
+          </div>
+          <div class="table-wrap shipment-selection-table">
+            <table>
+              <thead><tr><th aria-label="Seleccionar"></th><th>Fecha</th><th>Cliente</th><th>Detalle</th><th>Tallos</th><th>Cajas</th><th>Valor venta</th></tr></thead>
+              <tbody id="pendingShipmentsBody"></tbody>
+            </table>
+          </div>
+          <div class="shipment-selection-summary" id="shipmentSelectionSummary">Ningun despacho seleccionado.</div>
+        </section>
         <div class="total-box"><span>Saldo pendiente</span><span id="factSaldo">-</span></div>
         <div class="total-box"><span>Estado</span><span id="factEstado">PENDIENTE</span></div>
         <div class="full actions" style="justify-content:space-between">
@@ -74,6 +90,33 @@
           <button class="btn primary" id="factSubmit" type="submit">Guardar factura</button>
         </div>
       </form>
+
+      <section class="card panel" id="inventario-despachos">
+        <div class="section-heading">
+          <div>
+            <h3>Inventario de cajas enviadas</h3>
+            <p>Cada venta confirmada se registra como despacho y conserva su relacion con la factura del SRI.</p>
+          </div>
+          <button class="btn" id="printShipmentsBtn" type="button">PDF cajas enviadas</button>
+        </div>
+        <div class="kpis compact-kpis shipment-kpis">
+          <div class="shipment-kpi kpi"><div class="label">Cajas enviadas</div><div class="value" id="kCajasEnviadas">-</div><div class="note">Total de despachos</div></div>
+          <div class="shipment-kpi kpi"><div class="label">Por facturar</div><div class="value" id="kCajasPendientes">-</div><div class="note">Cajas sin factura</div></div>
+          <div class="shipment-kpi kpi"><div class="label">Despachos</div><div class="value" id="kDespachos">-</div><div class="note">Lineas enviadas</div></div>
+        </div>
+        <div class="filters shipment-filters">
+          <div class="field"><label for="shipmentClientFilter">Cliente</label><input id="shipmentClientFilter" placeholder="Filtrar cliente"></div>
+          <div class="field"><label for="shipmentStatusFilter">Facturacion</label><select id="shipmentStatusFilter"><option value="">Todos</option><option value="PENDIENTE">Pendientes</option><option value="FACTURADO">Facturados</option></select></div>
+          <div class="field"><label for="shipmentFromFilter">Desde</label><input id="shipmentFromFilter" type="date"></div>
+          <div class="field"><label for="shipmentToFilter">Hasta</label><input id="shipmentToFilter" type="date"></div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Fecha</th><th>Cliente</th><th>Variedad</th><th>Medida</th><th>Tallos</th><th>Bunches</th><th>Tipo caja</th><th>Cajas enviadas</th><th>Factura</th><th>Estado</th></tr></thead>
+            <tbody id="shipmentsBody"></tbody>
+          </table>
+        </div>
+      </section>
 
       <form class="card panel form-grid" id="pagoForm">
         <h3>Registro de pago o abono</h3>
@@ -101,7 +144,7 @@
         </div>
         <div class="table-wrap">
           <table>
-            <thead><tr><th>Cliente</th><th>Numero factura</th><th>Valor factura</th><th>Valor pagado</th><th>Saldo pendiente</th><th>Estado</th><th>Link PDF</th></tr></thead>
+            <thead><tr><th>Cliente</th><th>Numero factura</th><th>Envio facturado</th><th>Valor factura</th><th>Valor pagado</th><th>Saldo pendiente</th><th>Estado</th><th>Link PDF</th></tr></thead>
             <tbody id="estadoBody"></tbody>
           </table>
         </div>

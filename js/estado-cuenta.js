@@ -1,6 +1,8 @@
 let estadoRows = [];
 let invoiceRows = [];
 let invoiceLookup = new Map();
+let shipmentRows = [];
+let selectedShipmentIds = new Set();
 const PDF_JS_WORKER_URL = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
 
 function estadoFromSaldo(valorTotal, saldo, vencimiento) {
@@ -41,6 +43,11 @@ function normalizeEstadoCuenta(rows) {
       vendedor: text(row.vendedor),
       observacion: text(row.observacion || row.observaciones),
       url_pdf_factura: text(row.url_pdf_factura),
+      ids_ventas: text(row.ids_ventas),
+      tallos_enviados: asNumber(row.tallos_enviados),
+      bunches_enviados: asNumber(row.bunches_enviados),
+      cajas_enviadas: asNumber(row.cajas_enviadas),
+      detalle_envio: text(row.detalle_envio),
       fecha_registro: text(row.fecha_registro)
     };
   }).filter(row => row.cliente && (row.numero_factura || row.valor_factura || row.valor_pagado));
@@ -67,6 +74,11 @@ function canonicalInvoiceRows(rows) {
     current.fecha_vencimiento = row.fecha_vencimiento || current.fecha_vencimiento;
     current.vendedor = row.vendedor || current.vendedor;
     current.url_pdf_factura = row.url_pdf_factura || current.url_pdf_factura;
+    current.ids_ventas = row.ids_ventas || current.ids_ventas;
+    current.tallos_enviados = Math.max(current.tallos_enviados, row.tallos_enviados);
+    current.bunches_enviados = Math.max(current.bunches_enviados, row.bunches_enviados);
+    current.cajas_enviadas = Math.max(current.cajas_enviadas, row.cajas_enviadas);
+    current.detalle_envio = row.detalle_envio || current.detalle_envio;
     current.observacion = row.observacion || current.observacion;
     current.estado = estadoFromSaldo(valor, current.saldo_pendiente, current.fecha_vencimiento);
   });
@@ -99,6 +111,119 @@ function filteredRows() {
   });
 }
 
+function shipmentBillingState(row) {
+  return row.numero_factura || row.estado_facturacion === 'FACTURADO' ? 'FACTURADO' : 'PENDIENTE';
+}
+
+function pendingShipments() {
+  return shipmentRows.filter(row => row.id_venta && shipmentBillingState(row) === 'PENDIENTE');
+}
+
+function normalizedClientKey(value) {
+  return text(value).normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^A-Z0-9]/gi, '').toUpperCase();
+}
+
+function selectedShipments() {
+  return pendingShipments().filter(row => selectedShipmentIds.has(row.id_venta));
+}
+
+function shipmentTotals(rows) {
+  return (rows || []).reduce((totals, row) => {
+    const packing = shipmentPacking(row);
+    totals.tallos += asNumber(row.tallos);
+    totals.bunches += packing.bunches;
+    totals.cajas += packing.cajasEnviadas;
+    totals.valor += asNumber(row.total_venta || row.tallos * row.precio_unitario);
+    return totals;
+  }, { tallos: 0, bunches: 0, cajas: 0, valor: 0 });
+}
+
+function renderPendingShipmentSelection() {
+  const rows = pendingShipments().sort((a, b) => text(b.fecha).localeCompare(text(a.fecha)) || a.cliente.localeCompare(b.cliente));
+  renderRows($('pendingShipmentsBody'), rows, [
+    row => `<input class="shipment-checkbox" type="checkbox" data-shipment-id="${row.id_venta}" aria-label="Incluir despacho ${row.id_venta}" ${selectedShipmentIds.has(row.id_venta) ? 'checked' : ''}>`,
+    row => row.fecha || '-',
+    row => row.cliente || '-',
+    row => `${row.variedad} · ${medidaLabel(row.medida_cm)}`,
+    row => fmtInt(row.tallos),
+    row => shipmentPackingLabel(row),
+    row => fmtMoney(row.total_venta || row.tallos * row.precio_unitario)
+  ], 'No hay despachos pendientes de facturar.');
+  updateShipmentSelectionSummary();
+}
+
+function updateShipmentSelectionSummary() {
+  const rows = selectedShipments();
+  const totals = shipmentTotals(rows);
+  $('shipmentSelectionSummary').textContent = rows.length
+    ? `${fmtInt(rows.length)} despacho(s) · ${fmtInt(totals.tallos)} tallos · ${fmtInt(totals.cajas)} cajas · ${fmtMoney(totals.valor)} en ventas`
+    : 'Ningun despacho seleccionado.';
+}
+
+function selectClientShipments() {
+  const clientKey = normalizedClientKey($('factCliente').value);
+  if (!clientKey) {
+    $('factMsg').textContent = 'Escribe o carga primero el cliente de la factura.';
+    return;
+  }
+  const matches = pendingShipments().filter(row => normalizedClientKey(row.cliente) === clientKey);
+  selectedShipmentIds = new Set(matches.map(row => row.id_venta));
+  renderPendingShipmentSelection();
+  $('factMsg').textContent = matches.length
+    ? `Se seleccionaron ${fmtInt(matches.length)} despachos pendientes de ${$('factCliente').value}. Revisa la lista antes de guardar.`
+    : 'No se encontraron despachos pendientes con ese nombre de cliente. Puedes seleccionarlos manualmente.';
+}
+
+function filteredShipmentRows() {
+  const cliente = text($('shipmentClientFilter')?.value).toUpperCase();
+  const estado = text($('shipmentStatusFilter')?.value).toUpperCase();
+  const desde = text($('shipmentFromFilter')?.value);
+  const hasta = text($('shipmentToFilter')?.value);
+  return shipmentRows.filter(row => {
+    const state = shipmentBillingState(row);
+    return (!cliente || row.cliente.toUpperCase().includes(cliente))
+      && (!estado || state === estado)
+      && (!desde || row.fecha >= desde)
+      && (!hasta || row.fecha <= hasta);
+  }).sort((a, b) => text(b.fecha).localeCompare(text(a.fecha)) || a.cliente.localeCompare(b.cliente));
+}
+
+function renderShipmentInventory() {
+  const total = shipmentTotals(shipmentRows);
+  const pending = shipmentTotals(pendingShipments());
+  $('kCajasEnviadas').textContent = fmtInt(total.cajas);
+  $('kCajasPendientes').textContent = fmtInt(pending.cajas);
+  $('kDespachos').textContent = fmtInt(shipmentRows.length);
+  renderRows($('shipmentsBody'), filteredShipmentRows(), [
+    row => row.fecha || '-',
+    row => row.cliente || '-',
+    row => row.variedad,
+    row => medidaLabel(row.medida_cm),
+    row => fmtInt(row.tallos),
+    row => fmtInt(shipmentPacking(row).bunches),
+    row => shipmentPacking(row).tipoCaja,
+    row => shipmentPackingLabel(row),
+    row => row.numero_factura || '-',
+    row => `<span class="pill ${shipmentBillingState(row) === 'FACTURADO' ? 'ok' : 'warn'}">${shipmentBillingState(row)}</span>`
+  ], 'No hay despachos registrados con estos filtros.');
+}
+
+function printShipmentInventory() {
+  const rows = filteredShipmentRows();
+  const totals = shipmentTotals(rows);
+  const generatedAt = new Date().toLocaleString('es-EC', { dateStyle: 'medium', timeStyle: 'short' });
+  const report = window.open('', '_blank');
+  if (!report) {
+    setStatus('El navegador bloqueo la ventana del reporte. Habilita ventanas emergentes e intenta nuevamente.');
+    return;
+  }
+  report.opener = null;
+  report.document.write(`<!doctype html><html lang="es"><head><meta charset="utf-8"><title>Inventario de cajas enviadas</title><style>
+    body{font-family:Arial,sans-serif;color:#172016;margin:28px}header{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #536313;padding-bottom:16px;margin-bottom:28px}h1{font-family:Georgia,serif;color:#4f5c1d;margin:0;font-size:36px}h2{margin:0 0 8px}.meta{text-align:right}.summary{display:flex;gap:28px;margin:18px 0;font-weight:700;color:#4f5c1d}table{width:100%;border-collapse:collapse;font-size:12px}th,td{border:1px solid #dfe3d6;padding:9px;text-align:left}th{background:#f1f4ea;text-transform:uppercase;font-size:10px}td.num,th.num{text-align:right}tfoot th{font-size:12px}footer{margin-top:36px;padding-top:14px;border-top:1px solid #dfe3d6;text-align:center;color:#6d7168}@page{size:landscape;margin:12mm}@media print{body{margin:0}}
+  </style></head><body><header><h1>Altitud Flowers</h1><div class="meta"><strong>Generado</strong><br>${generatedAt}</div></header><h2>Inventario de cajas enviadas</h2><p>Despachos registrados desde ventas y su estado de facturacion.</p><div class="summary"><span>${fmtInt(rows.length)} despachos</span><span>${fmtInt(totals.tallos)} tallos</span><span>${fmtInt(totals.bunches)} bunches</span><span>${fmtInt(totals.cajas)} cajas</span></div><table><thead><tr><th>Fecha</th><th>Cliente</th><th>Variedad</th><th>Medida</th><th class="num">Tallos</th><th class="num">Bunches</th><th>Tipo caja</th><th class="num">Cajas</th><th>Factura</th><th>Estado</th></tr></thead><tbody>${rows.map(row => `<tr><td>${row.fecha}</td><td>${row.cliente}</td><td>${row.variedad}</td><td>${medidaLabel(row.medida_cm)}</td><td class="num">${fmtInt(row.tallos)}</td><td class="num">${fmtInt(shipmentPacking(row).bunches)}</td><td>${shipmentPacking(row).tipoCaja}</td><td class="num">${fmtInt(shipmentPacking(row).cajasEnviadas)}</td><td>${row.numero_factura || '-'}</td><td>${shipmentBillingState(row)}</td></tr>`).join('') || '<tr><td colspan="10">Sin despachos.</td></tr>'}</tbody><tfoot><tr><th colspan="4">TOTAL</th><th class="num">${fmtInt(totals.tallos)}</th><th class="num">${fmtInt(totals.bunches)}</th><th></th><th class="num">${fmtInt(totals.cajas)}</th><th colspan="2"></th></tr></tfoot></table><footer>Altitud Flowers · Reporte interno de cajas enviadas</footer><script>window.onload=()=>window.print()<\/script></body></html>`);
+  report.document.close();
+}
+
 function renderEstadoCuenta() {
   const today = todayISO();
   const totalFacturado = invoiceRows.reduce((sum, row) => sum + row.valor_factura, 0);
@@ -112,6 +237,7 @@ function renderEstadoCuenta() {
   renderRows($('estadoBody'), filteredRows(), [
     row => row.cliente || '-',
     row => row.numero_factura || '-',
+    row => row.cajas_enviadas ? `${fmtInt(row.cajas_enviadas)} cajas · ${fmtInt(row.tallos_enviados)} tallos` : '-',
     row => fmtMoney(row.valor_factura),
     row => fmtMoney(row.valor_pagado),
     row => fmtMoney(row.saldo_pendiente),
@@ -121,9 +247,10 @@ function renderEstadoCuenta() {
 }
 
 async function loadEstadoCuenta() {
-  const [estadoResult, facturasResult] = await Promise.allSettled([
+  const [estadoResult, facturasResult, ventasResult] = await Promise.allSettled([
     loadSheet(ALTITUD.sheets.estadoCuenta),
-    loadSheet(ALTITUD.sheets.facturas)
+    loadSheet(ALTITUD.sheets.facturas),
+    loadSheet(ALTITUD.sheets.ventas)
   ]);
   estadoRows = estadoResult.status === 'fulfilled'
     ? normalizeEstadoCuenta(estadoResult.value)
@@ -131,11 +258,23 @@ async function loadEstadoCuenta() {
   const facturas = facturasResult.status === 'fulfilled'
     ? normalizeEstadoCuenta(facturasResult.value)
     : [];
+  shipmentRows = ventasResult.status === 'fulfilled'
+    ? normalizeSales(ventasResult.value)
+    : [];
   invoiceRows = canonicalInvoiceRows([...estadoRows, ...facturas]);
+  const invoiceBySaleId = new Map();
+  invoiceRows.forEach(invoice => text(invoice.ids_ventas).split('|').map(text).filter(Boolean).forEach(id => invoiceBySaleId.set(id, invoice.numero_factura)));
+  shipmentRows = shipmentRows.map(row => invoiceBySaleId.has(row.id_venta)
+    ? { ...row, numero_factura: invoiceBySaleId.get(row.id_venta), estado_facturacion: 'FACTURADO' }
+    : row);
+  const pendingIds = new Set(pendingShipments().map(row => row.id_venta));
+  selectedShipmentIds = new Set(Array.from(selectedShipmentIds).filter(id => pendingIds.has(id)));
   rebuildInvoiceLookup();
   renderEstadoCuenta();
+  renderShipmentInventory();
+  renderPendingShipmentSelection();
   applyInvoiceSelection();
-  setStatus(`Estado de cuenta actualizado - ${fmtInt(invoiceRows.length)} facturas`);
+  setStatus(`Estado de cuenta actualizado · ${fmtInt(invoiceRows.length)} facturas · ${fmtInt(pendingShipments().length)} despachos por facturar`);
 }
 
 function readPdf(file) {
@@ -338,6 +477,7 @@ function applyInvoicePdfData(data) {
     completed.push($(id).previousElementSibling?.textContent || id);
   });
   updateFacturaPreview();
+  if (data.cliente) selectClientShipments();
   return completed;
 }
 
@@ -374,12 +514,15 @@ async function postEstadoCuenta(action, record, pdf) {
   const endpoint = ALTITUD.estadoCuentaUrl || ALTITUD.appsScriptUrl;
   if (!endpoint) throw new Error('Falta configurar la URL de Apps Script en js/config.js');
   const user = window.ALTITUD_PERMISOS ? ALTITUD_PERMISOS.getCurrentUser() : {};
-  await fetch(endpoint, {
+  const response = await fetch(endpoint, {
     method: 'POST',
-    mode: 'no-cors',
     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
     body: JSON.stringify({ action, record, pdf, driveFolderId: ALTITUD.driveFolderFacturasId, user })
   });
+  if (!response.ok) throw new Error(`Apps Script respondio ${response.status}`);
+  const result = await response.json();
+  if (result?.ok === false) throw new Error(text(result.error).replace(/^Error:\s*/i, ''));
+  return result;
 }
 
 async function findRemoteInvoice(numeroFactura) {
@@ -493,6 +636,19 @@ async function setupForms() {
   $('pagoValor').addEventListener('input', updatePagoPreview);
   $('factPdf').addEventListener('change', event => autofillInvoiceFromPdf(event.target.files[0]));
   ['clienteFiltro', 'estadoFiltro'].forEach(id => $(id).addEventListener('input', renderEstadoCuenta));
+  ['shipmentClientFilter', 'shipmentStatusFilter', 'shipmentFromFilter', 'shipmentToFilter'].forEach(id => $(id).addEventListener('input', renderShipmentInventory));
+  $('selectClientShipmentsBtn').addEventListener('click', selectClientShipments);
+  $('factCliente').addEventListener('change', selectClientShipments);
+  $('pendingShipmentsBody').addEventListener('change', event => {
+    const checkbox = event.target.closest('[data-shipment-id]');
+    if (!checkbox) return;
+    if (checkbox.checked) selectedShipmentIds.add(checkbox.dataset.shipmentId);
+    else selectedShipmentIds.delete(checkbox.dataset.shipmentId);
+    const rows = selectedShipments();
+    if (!$('factCliente').value && rows.length) $('factCliente').value = rows[0].cliente;
+    updateShipmentSelectionSummary();
+  });
+  $('printShipmentsBtn').addEventListener('click', printShipmentInventory);
   $('refreshBtn').addEventListener('click', loadEstadoCuenta);
   updateFacturaPreview();
   applyInvoiceSelection();
@@ -501,6 +657,13 @@ async function setupForms() {
     event.preventDefault();
     const submitButton = $('factSubmit');
     const valor = asNumber($('factValor').value);
+    const shipments = selectedShipments();
+    const shipmentSummary = shipmentTotals(shipments);
+    if (text($('factConcepto').value) === 'Ventas de flor' && !shipments.length) {
+      $('factMsg').textContent = 'Selecciona al menos un despacho para registrar una factura de venta de flor.';
+      $('pendingShipmentsBody').scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
+    }
     const record = {
       id_movimiento: `EC-${Date.now()}`,
       id_factura: `FAC-${Date.now()}`,
@@ -519,6 +682,11 @@ async function setupForms() {
       fecha_vencimiento: $('factVence').value,
       vendedor: '',
       observacion: text($('factObs').value),
+      ids_ventas: shipments.map(row => row.id_venta).join('|'),
+      tallos_enviados: shipmentSummary.tallos,
+      bunches_enviados: shipmentSummary.bunches,
+      cajas_enviadas: shipmentSummary.cajas,
+      detalle_envio: shipments.map(row => `${row.fecha} ${row.variedad} ${medidaLabel(row.medida_cm)} ${fmtInt(row.tallos)} tallos ${fmtInt(shipmentPacking(row).cajasEnviadas)} cajas`).join(' | '),
       fecha_registro: new Date().toISOString()
     };
     if (invoiceLookup.has(invoiceKey(record.numero_factura))) {
@@ -530,18 +698,25 @@ async function setupForms() {
     submitButton.disabled = true;
     $('factMsg').textContent = 'Guardando factura y PDF. Espera la confirmacion de Google Sheets...';
     try {
-      await postEstadoCuenta('registrarFactura', record, pdf);
-      const savedInvoice = await waitForRemoteInvoice(record.numero_factura);
+      const saveResult = await postEstadoCuenta('registrarFactura', record, pdf);
+      const savedInvoice = saveResult?.factura || await waitForRemoteInvoice(record.numero_factura);
       if (!savedInvoice) throw new Error('Google Sheets no confirmo el registro');
       const normalizedSaved = normalizeEstadoCuenta([savedInvoice])[0];
       if (normalizedSaved) appendLocal(normalizedSaved);
       $('factMsg').textContent = `Factura ${record.numero_factura} guardada y confirmada en Google Sheets.`;
       $('facturaForm').reset();
+      selectedShipmentIds.clear();
       $('factFecha').value = todayISO();
       $('factPdfStatus').textContent = 'Selecciona una factura PDF para completar automaticamente los datos.';
       updateFacturaPreview();
       await loadEstadoCuenta();
       if (!invoiceLookup.has(invoiceKey(record.numero_factura))) appendLocal(normalizedSaved);
+      const linkedIds = new Set(record.ids_ventas.split('|').filter(Boolean));
+      shipmentRows = shipmentRows.map(row => linkedIds.has(row.id_venta)
+        ? { ...row, numero_factura: record.numero_factura, estado_facturacion: 'FACTURADO', facturado_en: record.fecha_registro }
+        : row);
+      renderShipmentInventory();
+      renderPendingShipmentSelection();
     } catch (err) {
       $('factMsg').textContent = `${text(err.message) || 'No se pudo guardar la factura'}. Los campos se conservaron para volver a intentar.`;
     } finally {

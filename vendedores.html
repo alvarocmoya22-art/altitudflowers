@@ -9,8 +9,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/estilos.css?v=20260820-calidad-integracion" />
   <script src="data/local-data.js?v=20260616-postcosecha"></script>
-  <script src="js/config.js?v=20260820-calidad-integracion"></script>
-  <script src="js/vendedores.js?v=20260820-calidad-integracion" defer></script>
+  <script src="js/config.js?v=20260929-medida-manda"></script>
+  <script src="js/vendedores.js?v=20260910-despachos-facturas" defer></script>
 </head>
 <body data-module="vendedores">
   <section class="login-view" id="loginView">
@@ -58,6 +58,10 @@
           <div class="field"><label for="saleBunches">Bunches</label><input id="saleBunches" type="number" min="0" step="1"></div>
           <div class="field"><label for="saleTallos">Tallos</label><input id="saleTallos" type="number" min="1" step="1" required></div>
           <div class="field"><label for="salePrecio">Precio unitario</label><input id="salePrecio" type="number" min="0" step="0.01"></div>
+          <div class="field"><label for="saleTipoCaja">Tipo de caja</label><select id="saleTipoCaja"><option value="HB">HB</option></select></div>
+          <div class="field"><label for="saleCapacity">Bunches por caja</label><input id="saleCapacity" type="number" min="1" step="1" readonly></div>
+          <div class="field"><label for="saleCajas">Cajas enviadas</label><input id="saleCajas" type="number" min="1" step="1" required></div>
+          <div class="total-box"><span>Empaque</span><span id="salePacking">-</span></div>
           <div class="field wide"><label for="saleObs">Observaciones</label><input id="saleObs"></div>
           <div class="total-box"><span>Disponible</span><span id="saleDisponible">-</span></div>
           <div class="total-box"><span>Total venta</span><span id="saleTotal">$0,00</span></div>
@@ -85,7 +89,7 @@
           <h3>Ventas registradas</h3>
           <div class="table-wrap">
             <table>
-              <thead><tr><th>Fecha</th><th>Vendedor</th><th>Cliente</th><th>Variedad</th><th>Medida</th><th>Tallos</th><th>Total</th><th>Estado</th><th>Accion</th></tr></thead>
+              <thead><tr><th>Fecha</th><th>Vendedor</th><th>Cliente</th><th>Variedad</th><th>Medida</th><th>Tallos</th><th>Cajas</th><th>Total</th><th>Facturacion</th><th>Accion</th></tr></thead>
               <tbody id="salesBody"></tbody>
             </table>
           </div>

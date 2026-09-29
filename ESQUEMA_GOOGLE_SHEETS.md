@@ -4,7 +4,7 @@ El dashboard debe usar un Google Sheets con pestañas separadas por proceso. Est
 
 Flujo operativo vigente:
 
-`PRODUCCION_CAMPO -> POSCOSECHA -> CONTROL_CALIDAD -> CUARTO_FRIO -> VENTAS_VENDEDORES`
+`PRODUCCION_CAMPO -> POSCOSECHA -> CONTROL_CALIDAD -> CUARTO_FRIO -> VENTAS_VENDEDORES -> FACTURAS -> ESTADO_CUENTA`
 
 Desde el 20 de agosto de 2026, Poscosecha ya no incrementa directamente el stock. Solo los totales diarios por fecha y variedad con control `APROBADO` o `AJUSTADO` ingresan al inventario vendible.
 
@@ -24,6 +24,15 @@ Estados permitidos:
 Regla de inventario:
 `Stock disponible = tallos aprobados por calidad - tallos vendidos`
 
+### VENTAS_VENDEDORES
+Cada fila representa una linea despachada. Ademas de descontar Cuarto Frio, conserva el empaque y su vinculo con la factura del SRI.
+
+Campos:
+`id_venta`, `fecha`, `hora`, `vendedor`, `cliente`, `variedad`, `medida_cm`, `tipo`, `bunches`, `tallos`, `precio_unitario`, `total_venta`, `tipo_caja`, `bunches_por_caja`, `cajas_enviadas`, `numero_factura`, `estado_facturacion`, `facturado_en`, `estado`, `observaciones`, `creado_en`, `origen`
+
+Estados de facturacion:
+`PENDIENTE`, `FACTURADO`
+
 ### DATOS_WEB
 Producción diaria o semanal. Es la hoja que ya lee el dashboard actual.
 
@@ -40,7 +49,9 @@ Campos:
 Facturación, cobros y saldos.
 
 Campos:
-`factura`, `cliente`, `ruc_cedula`, `fecha_emision`, `fecha_vencimiento`, `valor_factura`, `estado`, `nota_credito`, `saldo`, `dias_vencido`, `observaciones`
+`id_movimiento`, `fecha`, `cliente`, `concepto`, `descripcion`, `tipo_movimiento`, `numero_factura`, `valor_factura`, `valor_pagado`, `saldo_pendiente`, `estado`, `fecha_vencimiento`, `vendedor`, `observacion`, `url_pdf_factura`, `ids_ventas`, `tallos_enviados`, `bunches_enviados`, `cajas_enviadas`, `detalle_envio`, `fecha_registro`
+
+Al guardar una factura de venta de flor, `ids_ventas` vincula los despachos seleccionados. Esas ventas cambian automaticamente a `FACTURADO` y dejan de aparecer como pendientes.
 
 Estados sugeridos:
 `PENDIENTE`, `PAGADO`, `VENCIDO`, `ANULADA`

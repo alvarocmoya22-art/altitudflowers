@@ -18,3 +18,4 @@ build/
 
 # Paquetes generados para despliegue manual
 *.zip
+.claude/

@@ -1675,6 +1675,50 @@ body.has-collapsible-sidebar.sidebar-collapsed .sidebar .nav a{
 }
 body.has-collapsible-sidebar.sidebar-collapsed .nav-label{display:none}
 
+/* Estado de cuenta: despachos, facturas e inventario de cajas */
+.invoice-shipments-picker{
+  grid-column:1/-1;
+  min-width:0;
+  margin-top:4px;
+  padding-top:18px;
+  border-top:1px solid var(--border);
+}
+.invoice-shipments-picker .section-heading,
+#inventario-despachos>.section-heading{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:18px;
+  margin-bottom:14px;
+}
+.invoice-shipments-picker h4{margin:0 0 5px;font-size:16px}
+.invoice-shipments-picker p,
+#inventario-despachos .section-heading p{margin:0;color:var(--muted);font-size:13px}
+.shipment-selection-table{max-height:320px;overflow:auto;border:1px solid var(--border);border-radius:8px}
+.shipment-selection-table table{margin:0}
+.shipment-checkbox{display:block;width:18px;height:18px;margin:auto;accent-color:var(--green-700)}
+.shipment-selection-summary{
+  margin-top:10px;
+  padding:11px 13px;
+  border-left:4px solid var(--green-700);
+  background:#f3f7ee;
+  color:var(--green-800);
+  font-size:13px;
+  font-weight:800;
+}
+.shipment-kpis{grid-template-columns:repeat(3,minmax(0,1fr));margin:0 0 16px}
+.shipment-kpi{border:1px solid var(--border);border-top:4px solid var(--gold);border-radius:8px;background:#fbfcf8}
+.shipment-filters{margin-bottom:16px}
+
+@media(max-width:760px){
+  .invoice-shipments-picker .section-heading,
+  #inventario-despachos>.section-heading{align-items:stretch;flex-direction:column}
+  .invoice-shipments-picker .btn,
+  #inventario-despachos>.section-heading .btn{width:100%}
+  .shipment-kpis{grid-template-columns:1fr!important}
+  .shipment-selection-table{max-height:380px}
+}
+
 @media(max-width:960px){
   body.has-collapsible-sidebar .shell,
   body.has-collapsible-sidebar.sidebar-collapsed .shell{
