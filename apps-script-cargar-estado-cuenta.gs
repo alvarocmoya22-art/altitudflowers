@@ -190,6 +190,11 @@ function cargarEstadoCuenta() {
 
   hoja.clear();
   hoja.getRange(1, 1, 1, encabezados.length).setValues([encabezados]);
+  // La columna del numero de factura va como texto antes de escribir: si queda
+  // numerica, gviz devuelve vacio para los numeros del SRI (001-100-000000077)
+  // y el dashboard no los ve.
+  const colNumero = encabezados.indexOf('numero_factura') + 1;
+  if (colNumero) hoja.getRange(2, colNumero, filas.length, 1).setNumberFormat('@');
   hoja.getRange(2, 1, filas.length, encabezados.length).setValues(filas);
   hoja.setFrozenRows(1);
   SpreadsheetApp.flush();
@@ -197,4 +202,40 @@ function cargarEstadoCuenta() {
   const t = totalesCarga_();
   Logger.log('Listo. %s filas escritas (%s del Excel + %s del dashboard).', filas.length, CARGA_ESTADO_CUENTA.length, filas.length - CARGA_ESTADO_CUENTA.length);
   Logger.log('Por cobrar del Excel: %s. Sumale lo que aporten las conservadas.', t.saldo.toFixed(2));
+}
+
+/**
+ * Repara el tipo de la columna numero_factura, en ESTADO_CUENTA y en FACTURAS.
+ *
+ * Google Sheets convierte a numero todo lo que parezca numero, asi que una
+ * columna con "2", "3", "92" queda tipada como numerica. El dashboard lee por
+ * gviz, que asigna UN tipo por columna y devuelve vacio para las celdas que no
+ * encajan: las facturas del SRI con formato 001-100-000000077 se volvian
+ * invisibles, no se podian cruzar con su gemela de FACTURAS y la cartera se
+ * contaba dos veces.
+ *
+ * Pasa la columna a texto y reescribe los valores como texto. Correrlo mas de
+ * una vez no hace dano.
+ */
+function arreglarNumeroFacturaComoTexto() {
+  ['ESTADO_CUENTA', 'FACTURAS'].forEach(function(nombre) {
+    const hoja = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(nombre);
+    if (!hoja || hoja.getLastRow() < 2) { Logger.log('%s: sin datos, se omite.', nombre); return; }
+    const encabezados = hoja.getRange(1, 1, 1, hoja.getLastColumn()).getValues()[0]
+      .map(function(h) { return String(h || '').trim(); });
+    const columna = encabezados.indexOf('numero_factura') + 1;
+    if (!columna) { Logger.log('%s: no tiene columna numero_factura.', nombre); return; }
+
+    const rango = hoja.getRange(2, columna, hoja.getLastRow() - 1, 1);
+    const valores = rango.getValues().map(function(fila) {
+      const v = fila[0];
+      return [v === null || v === undefined ? '' : String(v).trim()];
+    });
+    rango.setNumberFormat('@');
+    rango.setValues(valores);
+    SpreadsheetApp.flush();
+    const conTexto = valores.filter(function(f) { return f[0] && !/^\d+$/.test(f[0]); }).length;
+    Logger.log('%s: %s numeros de factura pasados a texto (%s con formato del SRI).',
+      nombre, valores.length, conTexto);
+  });
 }
