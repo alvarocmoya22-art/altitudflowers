@@ -26,7 +26,12 @@ function normalizeEstadoCuenta(rows) {
     const pagado = Math.max(asNumber(row.valor_pagado), Math.max(0, valor - saldo));
     const factura = text(row.numero_factura || row.factura);
     const vencimiento = text(row.fecha_vencimiento);
-    const estado = estadoFromSaldo(valor, saldo, vencimiento);
+    // Una factura anulada no se deduce del saldo: sin valor ni saldo se veria
+    // como PAGADO, que es justo lo contrario de lo que paso. El estado escrito
+    // en la hoja manda.
+    const estado = estadoRegistrado === 'ANULADA' || estadoRegistrado === 'ANULADO'
+      ? 'ANULADA'
+      : estadoFromSaldo(valor, saldo, vencimiento);
     return {
       id_movimiento: text(row.id_movimiento || row.id_factura),
       id_factura: text(row.id_factura),
