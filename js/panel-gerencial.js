@@ -60,7 +60,11 @@ async function buildDashboard(){
   const avgPrice=ventas.reduce((a,r)=>a+r.tallos,0)?totalVenta/ventas.reduce((a,r)=>a+r.tallos,0):0;
   const facturado=accounts.reduce((a,r)=>a+r.valor,0);
   const pendiente=accounts.reduce((a,r)=>a+r.saldo,0);
-  const cobrado=accounts.reduce((a,r)=>a+r.valor_pagado,0)||(facturado-pendiente);
+  // Misma formula que la pantalla de Estado de Cuenta, para que las dos digan
+  // lo mismo. Sumar valor_pagado fila por fila no sirve: donde la nota de
+  // credito supera a la factura el valor se recorta a cero y el total se va.
+  const notasCredito=accounts.reduce((a,r)=>a+r.nota_credito,0);
+  const cobrado=Math.max(0,facturado-notasCredito-pendiente);
   const vencidas=accounts.filter(r=>r.estado==='VENCIDO'||(r.saldo>0&&dateValue({fecha:r.fecha_vencimiento})&&dateValue({fecha:r.fecha_vencimiento})<new Date())).length;
   const ingresosMes=ingresos.filter(sameMonth).reduce((a,r)=>a+asNumber(r.valor_ingresado),0);
   const compProy=comparativo.reduce((a,r)=>a+asNumber(r.tallos_proyectados),0);
