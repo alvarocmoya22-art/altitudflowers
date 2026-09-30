@@ -124,6 +124,45 @@ function totalesCarga_() {
   }, { valor: 0, notas: 0, cobrado: 0, saldo: 0, pagadas: 0, pendientes: 0, anuladas: 0 });
 }
 
+/**
+ * Devuelve, ya ordenadas segun los encabezados destino, las filas que emitio
+ * el dashboard y que por lo tanto no estan en el Excel. Se reconocen por el
+ * prefijo EC- que la app le pone al id_movimiento.
+ *
+ * De paso arregla el cliente: al leerlo del PDF quedo como
+ * "Identificacion 1091796152001" en vez del nombre.
+ */
+function conservadasDelDashboard_(hoja, encabezados) {
+  const ultimaFila = hoja.getLastRow();
+  if (ultimaFila < 2) return [];
+  const actuales = hoja.getRange(1, 1, 1, hoja.getLastColumn()).getValues()[0]
+    .map(function(h) { return String(h || '').trim(); });
+  const idx = actuales.indexOf('id_movimiento');
+  if (idx === -1) return [];
+
+  const datos = hoja.getRange(2, 1, ultimaFila - 1, hoja.getLastColumn()).getValues();
+  const nombrePorRuc = { '1091796152001': 'FLORES LA CASTELLANA', '1891782566001': 'MEGAFLOR' };
+
+  return datos
+    .filter(function(fila) { return String(fila[idx] || '').indexOf('EC-') === 0; })
+    .map(function(fila) {
+      const registro = {};
+      actuales.forEach(function(col, i) { if (col) registro[col] = fila[i]; });
+      const ruc = String(registro.ruc_cedula || '').replace(/\D/g, '');
+      const cliente = String(registro.cliente || '');
+      const rucEnNombre = (cliente.match(/\d{10,13}/) || [''])[0];
+      const nombre = nombrePorRuc[ruc] || nombrePorRuc[rucEnNombre];
+      if (nombre) {
+        registro.cliente = nombre;
+        if (!registro.ruc_cedula && rucEnNombre) registro.ruc_cedula = rucEnNombre;
+      }
+      Logger.log('Se conserva la factura %s del dashboard (%s)', registro.numero_factura, registro.cliente);
+      return encabezados.map(function(col) {
+        return registro[col] === undefined || registro[col] === null ? '' : registro[col];
+      });
+    });
+}
+
 function cargarEstadoCuenta() {
   const libro = SpreadsheetApp.openById(SPREADSHEET_ID);
   const hoja = libro.getSheetByName('ESTADO_CUENTA');
@@ -144,6 +183,11 @@ function cargarEstadoCuenta() {
     });
   });
 
+  // Las facturas emitidas desde el dashboard no estan en el Excel y se
+  // perderian al reemplazar la hoja. Se reconocen por el id que les pone la
+  // app (EC-...) y se conservan tal cual, al final.
+  conservadasDelDashboard_(hoja, encabezados).forEach(function(fila) { filas.push(fila); });
+
   hoja.clear();
   hoja.getRange(1, 1, 1, encabezados.length).setValues([encabezados]);
   hoja.getRange(2, 1, filas.length, encabezados.length).setValues(filas);
@@ -151,5 +195,6 @@ function cargarEstadoCuenta() {
   SpreadsheetApp.flush();
 
   const t = totalesCarga_();
-  Logger.log('Listo. %s facturas cargadas. Por cobrar: %s', filas.length, t.saldo.toFixed(2));
+  Logger.log('Listo. %s filas escritas (%s del Excel + %s del dashboard).', filas.length, CARGA_ESTADO_CUENTA.length, filas.length - CARGA_ESTADO_CUENTA.length);
+  Logger.log('Por cobrar del Excel: %s. Sumale lo que aporten las conservadas.', t.saldo.toFixed(2));
 }
