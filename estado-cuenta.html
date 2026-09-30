@@ -7,13 +7,13 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/estilos.css?v=20260910-despachos-facturas" />
+  <link rel="stylesheet" href="css/estilos.css?v=20260930-cartera" />
   <script src="data/local-data.js?v=20260616-postcosecha"></script>
-  <script src="js/config.js?v=20260929-medida-manda"></script>
+  <script src="js/config.js?v=20260930-cartera"></script>
   <script src="js/permisos.js?v=20260820-calidad"></script>
   <script src="js/nav.js?v=20260820-sidebar"></script>
   <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
-  <script src="js/estado-cuenta.js?v=20260910-despachos-facturas" defer></script>
+  <script src="js/estado-cuenta.js?v=20260930-cartera" defer></script>
 </head>
 <body data-module="estado-cuenta">
   <div class="shell">
@@ -48,10 +48,13 @@
 
       <section class="kpis">
         <div class="card kpi"><div class="label">Total facturado</div><div class="value" id="kFacturado">-</div><div class="note">Facturas emitidas</div></div>
-        <div class="card kpi"><div class="label">Total cobrado</div><div class="value" id="kCobrado">-</div><div class="note">Ingresos recibidos</div></div>
+        <div class="card kpi"><div class="label">Total cobrado</div><div class="value" id="kCobrado">-</div><div class="note" id="kCobradoNota">Ingresos recibidos</div></div>
         <div class="card kpi"><div class="label">Saldo pendiente</div><div class="value" id="kPendiente">-</div><div class="note">Por cobrar</div></div>
         <div class="card kpi"><div class="label">Facturas vencidas</div><div class="value" id="kVencidas">-</div><div class="note">Con saldo pendiente</div></div>
+        <div class="card kpi kpi-revisar" id="kRevisarCard"><div class="label">Por identificar</div><div class="value" id="kRevisar">-</div><div class="note" id="kRevisarNota">Sin cliente o sin numero</div></div>
       </section>
+
+      <div class="cartera-aviso" id="carteraAviso" hidden></div>
 
       <form class="card panel form-grid" id="facturaForm">
         <h3>Registro de factura</h3>
@@ -144,7 +147,7 @@
         </div>
         <div class="table-wrap">
           <table>
-            <thead><tr><th>Cliente</th><th>Numero factura</th><th>Envio facturado</th><th>Valor factura</th><th>Valor pagado</th><th>Saldo pendiente</th><th>Estado</th><th>Link PDF</th></tr></thead>
+            <thead><tr><th>Cliente</th><th>Numero factura</th><th>Envio facturado</th><th>Valor factura</th><th>Valor pagado</th><th>Saldo pendiente</th><th>Antiguedad</th><th>Estado</th><th>Link PDF</th></tr></thead>
             <tbody id="estadoBody"></tbody>
           </table>
         </div>

@@ -1785,3 +1785,36 @@ body.has-collapsible-sidebar.sidebar-collapsed .nav-label{display:none}
     transition:none;
   }
 }
+
+/* Estado de cuenta: aviso de cartera sin identificar y detalle por fila */
+.cartera-aviso{
+  display:flex;
+  flex-direction:column;
+  gap:5px;
+  margin:0 0 18px;
+  padding:14px 16px;
+  border:1px solid #e3cf9a;
+  border-left:4px solid var(--gold);
+  border-radius:8px;
+  background:#fdf8ec;
+  color:#6b5415;
+  font-size:13px;
+  line-height:1.5;
+}
+.cartera-aviso strong{color:#513f0c}
+.kpi.kpi-revisar .value{color:var(--muted)}
+.kpi.kpi-revisar.activa{border-top-color:var(--gold)}
+.kpi.kpi-revisar.activa .value{color:#8a6d12}
+.celda-nota{
+  display:block;
+  margin-top:2px;
+  color:var(--muted);
+  font-size:11px;
+  font-weight:600;
+  letter-spacing:.02em;
+}
+td .falta{
+  color:#8d2929;
+  font-size:12px;
+  font-style:italic;
+}

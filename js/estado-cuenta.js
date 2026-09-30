@@ -48,9 +48,13 @@ function normalizeEstadoCuenta(rows) {
       bunches_enviados: asNumber(row.bunches_enviados),
       cajas_enviadas: asNumber(row.cajas_enviadas),
       detalle_envio: text(row.detalle_envio),
-      fecha_registro: text(row.fecha_registro)
+      fecha_registro: text(row.fecha_registro),
+      ruc_cedula: text(row.ruc_cedula),
+      nota_credito: asNumber(row.nota_credito)
     };
-  }).filter(row => row.cliente && (row.numero_factura || row.valor_factura || row.valor_pagado));
+    // Un movimiento con plata cuenta aunque le falte el cliente o el numero de
+    // factura. Exigir cliente dejaba fuera de la cartera facturas reales.
+  }).filter(row => row.numero_factura || row.valor_factura || row.valor_pagado || row.saldo_pendiente);
 }
 
 function invoiceKey(value) {
@@ -59,8 +63,13 @@ function invoiceKey(value) {
 
 function canonicalInvoiceRows(rows) {
   const map = new Map();
-  (rows || []).filter(row => row.numero_factura).forEach(row => {
-    const key = invoiceKey(row.numero_factura);
+  // Los movimientos sin numero de factura tambien entran. Antes se descartaban
+  // aqui en silencio, y con ellos se iba plata real de la cartera. Cada uno
+  // recibe su propia clave para que no se fusionen entre si.
+  (rows || []).forEach((row, indice) => {
+    const key = row.numero_factura
+      ? invoiceKey(row.numero_factura)
+      : `SIN-NUMERO::${row.id_movimiento || row.id_factura || indice}`;
     const current = map.get(key);
     if (!current) {
       map.set(key, { ...row, tipo_movimiento: 'FACTURA' });
@@ -228,22 +237,75 @@ function renderEstadoCuenta() {
   const today = todayISO();
   const totalFacturado = invoiceRows.reduce((sum, row) => sum + row.valor_factura, 0);
   const totalPendiente = invoiceRows.reduce((sum, row) => sum + row.saldo_pendiente, 0);
-  const totalCobrado = Math.max(0, totalFacturado - totalPendiente);
+  // Una nota de credito rebaja la factura: no es plata que entro. Sin restarla,
+  // "cobrado" contaba como ingreso lo que en realidad se le perdono al cliente.
+  const totalNotas = invoiceRows.reduce((sum, row) => sum + (row.nota_credito || 0), 0);
+  const totalCobrado = Math.max(0, totalFacturado - totalNotas - totalPendiente);
+  if ($('kCobradoNota')) {
+    $('kCobradoNota').textContent = totalNotas
+      ? `Neto de ${fmtMoney(totalNotas)} en notas de credito`
+      : 'Ingresos recibidos';
+  }
   const vencidas = invoiceRows.filter(row => row.saldo_pendiente > 0 && ((row.fecha_vencimiento && row.fecha_vencimiento < today) || row.estado === 'VENCIDO')).length;
   $('kFacturado').textContent = fmtMoney(totalFacturado);
   $('kCobrado').textContent = fmtMoney(totalCobrado);
   $('kPendiente').textContent = fmtMoney(totalPendiente);
   $('kVencidas').textContent = fmtInt(vencidas);
+  renderCarteraAviso();
   renderRows($('estadoBody'), filteredRows(), [
-    row => row.cliente || '-',
-    row => row.numero_factura || '-',
+    row => row.cliente
+      ? `${row.cliente}${row.ruc_cedula ? `<span class="celda-nota">${row.ruc_cedula}</span>` : ''}`
+      : '<span class="falta">Sin cliente</span>',
+    row => row.numero_factura || '<span class="falta">Sin numero</span>',
     row => row.cajas_enviadas ? `${fmtInt(row.cajas_enviadas)} cajas · ${fmtInt(row.tallos_enviados)} tallos` : '-',
-    row => fmtMoney(row.valor_factura),
+    row => `${fmtMoney(row.valor_factura)}${row.nota_credito ? `<span class="celda-nota">NC ${fmtMoney(row.nota_credito)}</span>` : ''}`,
     row => fmtMoney(row.valor_pagado),
     row => fmtMoney(row.saldo_pendiente),
+    row => antiguedadTexto(row),
     row => `<span class="pill ${row.estado === 'VENCIDO' ? 'bad' : row.estado === 'ABONADO' || row.estado === 'PENDIENTE' ? 'warn' : ''}">${row.estado || '-'}</span>`,
     row => row.url_pdf_factura ? `<a href="${row.url_pdf_factura}" target="_blank" rel="noopener">PDF</a>` : '-'
   ]);
+}
+
+// Dias transcurridos desde la emision, solo para lo que sigue debiendose.
+// Mientras fecha_vencimiento este vacia en la hoja no se puede hablar de
+// "vencido", asi que se informa antiguedad, que es un dato que si existe.
+function antiguedadTexto(row) {
+  if (!row.saldo_pendiente) return '-';
+  const emitida = normalizarFecha(row.fecha);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(emitida)) return '<span class="falta">Sin fecha</span>';
+  const dias = Math.floor((Date.now() - new Date(`${emitida}T00:00:00`).getTime()) / 86400000);
+  if (dias < 0) return `<span class="falta">Fecha futura</span>`;
+  const clase = dias > 90 ? 'bad' : dias > 45 ? 'warn' : '';
+  return `<span class="pill ${clase}">${fmtInt(dias)} dias</span>`;
+}
+
+function renderCarteraAviso() {
+  const aviso = $('carteraAviso');
+  const revisar = invoiceRows.filter(row => !row.cliente || !row.numero_factura);
+  const monto = revisar.reduce((sum, row) => sum + row.saldo_pendiente, 0);
+  const facturado = revisar.reduce((sum, row) => sum + row.valor_factura, 0);
+  if ($('kRevisar')) $('kRevisar').textContent = fmtInt(revisar.length);
+  if ($('kRevisarNota')) $('kRevisarNota').textContent = revisar.length ? `${fmtMoney(monto)} por cobrar` : 'Todo identificado';
+  if ($('kRevisarCard')) $('kRevisarCard').classList.toggle('activa', revisar.length > 0);
+  if (!aviso) return;
+  aviso.hidden = !revisar.length;
+  if (!revisar.length) return;
+  const sinCliente = revisar.filter(row => !row.cliente).length;
+  const sinNumero = revisar.filter(row => !row.numero_factura).length;
+  const ambos = revisar.filter(row => !row.cliente && !row.numero_factura).length;
+  let detalle;
+  if (ambos === revisar.length) detalle = 'ninguno tiene cliente ni numero de factura';
+  else {
+    const partes = [];
+    if (sinCliente) partes.push(`${fmtInt(sinCliente)} sin cliente`);
+    if (sinNumero) partes.push(`${fmtInt(sinNumero)} sin numero de factura`);
+    detalle = partes.join(' y ');
+  }
+  aviso.innerHTML = `<strong>${fmtInt(revisar.length)} movimientos necesitan revision</strong>
+    <span>${detalle}. Suman ${fmtMoney(facturado)} facturados, de los cuales
+    <strong>${fmtMoney(monto)} siguen por cobrar</strong>. Estan incluidos en los totales de arriba,
+    pero sin cliente no se les puede reclamar a nadie.</span>`;
 }
 
 async function loadEstadoCuenta() {
