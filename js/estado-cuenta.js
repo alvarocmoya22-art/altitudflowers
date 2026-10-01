@@ -94,7 +94,12 @@ function canonicalInvoiceRows(rows) {
     current.cajas_enviadas = Math.max(current.cajas_enviadas, row.cajas_enviadas);
     current.detalle_envio = row.detalle_envio || current.detalle_envio;
     current.observacion = row.observacion || current.observacion;
-    current.estado = estadoFromSaldo(valor, current.saldo_pendiente, current.fecha_vencimiento);
+    // Si cualquiera de las dos copias esta anulada, la fusion lo respeta. Al
+    // recalcular el estado desde el saldo se perdia la anulacion y la factura
+    // volvia a figurar como pendiente de cobro.
+    current.estado = current.estado === 'ANULADA' || row.estado === 'ANULADA'
+      ? 'ANULADA'
+      : estadoFromSaldo(valor, current.saldo_pendiente, current.fecha_vencimiento);
   });
   return Array.from(map.values()).sort((a, b) => String(b.fecha).localeCompare(String(a.fecha)));
 }

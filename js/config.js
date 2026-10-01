@@ -38,7 +38,7 @@ async function deleteSheetRecord(sheetName,idField,idValue){if(!ALTITUD.appsScri
 
 function normalizarVariedad(valor){return normalizeVariety(valor)}
 function normalizarNumero(valor){return asNumber(valor)}
-function normalizarFecha(valor){const raw=text(valor);if(!raw)return'';const d=new Date(raw.includes('T')?raw:`${raw}T00:00:00`);return Number.isNaN(d.getTime())?raw:d.toISOString().slice(0,10)}
+function normalizarFecha(valor){const raw=text(valor);if(!raw)return'';const ec=raw.match(/^(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})$/);if(ec)return`${ec[3]}-${ec[2].padStart(2,'0')}-${ec[1].padStart(2,'0')}`;const d=new Date(raw.includes('T')?raw:`${raw}T00:00:00`);return Number.isNaN(d.getTime())?raw:d.toISOString().slice(0,10)}
 function normalizarMedida(valor){const v=text(valor).toUpperCase().replace(/\s+/g,'');if(!v)return'';if(['NACIONAL','NAC','NAC.','N'].includes(v))return'NACIONAL';const n=v.replace(/CM|CMS|CENTIMETROS|CENTIMETRO/g,'').replace(/[^0-9]/g,'');if(ALTITUD.medidasComerciales.includes(n))return n;return v}
 function medidaLabel(medida){const m=normalizarMedida(medida);return m==='NACIONAL'?'Nacional':m?`${m} cm`:''}
 function stockKey(variedad,medida){return `${normalizarVariedad(variedad)}|${normalizarMedida(medida)}`}
