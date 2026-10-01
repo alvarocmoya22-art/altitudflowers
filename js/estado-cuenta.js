@@ -284,7 +284,7 @@ function renderEstadoCuenta() {
 // Mientras fecha_vencimiento este vacia en la hoja no se puede hablar de
 // "vencido", asi que se informa antiguedad, que es un dato que si existe.
 function antiguedadTexto(row) {
-  if (!row.saldo_pendiente) return '-';
+  if (row.estado === 'ANULADA' || !row.saldo_pendiente) return '-';
   const emitida = normalizarFecha(row.fecha);
   if (!/^\d{4}-\d{2}-\d{2}$/.test(emitida)) return '<span class="falta">Sin fecha</span>';
   const dias = Math.floor((Date.now() - new Date(`${emitida}T00:00:00`).getTime()) / 86400000);
