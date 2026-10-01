@@ -240,18 +240,21 @@ function printShipmentInventory() {
 
 function renderEstadoCuenta() {
   const today = todayISO();
-  const totalFacturado = invoiceRows.reduce((sum, row) => sum + row.valor_factura, 0);
-  const totalPendiente = invoiceRows.reduce((sum, row) => sum + row.saldo_pendiente, 0);
+  // Una factura anulada sigue listandose, para que quede rastro, pero no suma
+  // en ningun total: no se facturo, no se cobro y nadie la debe.
+  const vigentes = invoiceRows.filter(row => row.estado !== 'ANULADA');
+  const totalFacturado = vigentes.reduce((sum, row) => sum + row.valor_factura, 0);
+  const totalPendiente = vigentes.reduce((sum, row) => sum + row.saldo_pendiente, 0);
   // Una nota de credito rebaja la factura: no es plata que entro. Sin restarla,
   // "cobrado" contaba como ingreso lo que en realidad se le perdono al cliente.
-  const totalNotas = invoiceRows.reduce((sum, row) => sum + (row.nota_credito || 0), 0);
+  const totalNotas = vigentes.reduce((sum, row) => sum + (row.nota_credito || 0), 0);
   const totalCobrado = Math.max(0, totalFacturado - totalNotas - totalPendiente);
   if ($('kCobradoNota')) {
     $('kCobradoNota').textContent = totalNotas
       ? `Neto de ${fmtMoney(totalNotas)} en notas de credito`
       : 'Ingresos recibidos';
   }
-  const vencidas = invoiceRows.filter(row => row.saldo_pendiente > 0 && ((row.fecha_vencimiento && row.fecha_vencimiento < today) || row.estado === 'VENCIDO')).length;
+  const vencidas = vigentes.filter(row => row.saldo_pendiente > 0 && ((row.fecha_vencimiento && row.fecha_vencimiento < today) || row.estado === 'VENCIDO')).length;
   $('kFacturado').textContent = fmtMoney(totalFacturado);
   $('kCobrado').textContent = fmtMoney(totalCobrado);
   $('kPendiente').textContent = fmtMoney(totalPendiente);
@@ -287,7 +290,7 @@ function antiguedadTexto(row) {
 
 function renderCarteraAviso() {
   const aviso = $('carteraAviso');
-  const revisar = invoiceRows.filter(row => !row.cliente || !row.numero_factura);
+  const revisar = invoiceRows.filter(row => row.estado !== 'ANULADA' && (!row.cliente || !row.numero_factura));
   const monto = revisar.reduce((sum, row) => sum + row.saldo_pendiente, 0);
   const facturado = revisar.reduce((sum, row) => sum + row.valor_factura, 0);
   if ($('kRevisar')) $('kRevisar').textContent = fmtInt(revisar.length);
