@@ -647,10 +647,13 @@ function validarControlCalidad_(record) {
 
   const fecha = normalizarFecha_(posRows[0].fecha);
   const variedad = normalizarVariedad_(posRows[0].variedad);
+  const categoria = normalizarCategoria_(posRows[0].categoria);
   const mismoTotalDiario = posRows.every(function(row) {
-    return normalizarFecha_(row.fecha) === fecha && normalizarVariedad_(row.variedad) === variedad;
+    return normalizarFecha_(row.fecha) === fecha
+      && normalizarVariedad_(row.variedad) === variedad
+      && normalizarCategoria_(row.categoria) === categoria;
   });
-  if (!mismoTotalDiario) throw new Error('El control solo puede agrupar una misma fecha y variedad');
+  if (!mismoTotalDiario) throw new Error('El control solo puede agrupar una misma fecha, variedad y categoria');
 
   const pairs = [
     ['tallos_70','tallos_70_aprobados'],
@@ -682,7 +685,8 @@ function validarControlCalidad_(record) {
     const nombre = String(row.responsable || '').trim().toUpperCase();
     if (nombre && procesadoras.indexOf(nombre) < 0) procesadoras.push(nombre);
   });
-  record.clave_control = fecha + '|' + variedad;
+  record.categoria = categoria;
+  record.clave_control = fecha + '|' + variedad + (categoria ? '|' + categoria : '');
   record.id_poscosecha = ids.join('|');
   record.ids_poscosecha = ids.join('|');
   record.fecha_proceso = fecha;
@@ -815,6 +819,11 @@ function normalizarNumero_(value) {
   if (!cleaned) return 0;
   if (cleaned.indexOf(',') >= 0) cleaned = cleaned.replace(/\./g, '').replace(',', '.');
   return Number(cleaned) || 0;
+}
+
+function normalizarCategoria_(valor) {
+  const v = String(valor || '').toUpperCase().replace(/[^AB]/g, '');
+  return v === 'A' || v === 'B' ? v : '';
 }
 
 function normalizarVariedad_(value) {

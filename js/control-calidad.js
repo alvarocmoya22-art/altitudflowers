@@ -94,10 +94,23 @@ function qualityDailyGroups(rows) {
     .sort((a, b) => text(b.fecha).localeCompare(text(a.fecha)) || text(a.variedad).localeCompare(text(b.variedad)) || text(a.categoria).localeCompare(text(b.categoria)));
 }
 
+// El Apps Script reescribe clave_control como "fecha|variedad" y pierde la
+// categoria, asi que un control de tipo A nunca calzaba con su grupo y el grupo
+// reaparecia pendiente aunque ya estuviera aprobado. La clave se recalcula desde
+// los campos del propio control; la guardada solo se usa si falta con que
+// recalcularla. Para los controles historicos, sin categoria, da el mismo valor.
+function claveDeControl(row) {
+  if (!row) return '';
+  if (text(row.fecha_proceso) && text(row.variedad)) {
+    return qualityGroupKey(row.fecha_proceso, row.variedad, row.categoria);
+  }
+  return text(row.clave_control);
+}
+
 function qualityControlMap() {
   const map = new Map();
   normalizeQuality(qualityRows).forEach(row => {
-    const key = row.clave_control || qualityGroupKey(row.fecha_proceso, row.variedad, row.categoria);
+    const key = claveDeControl(row);
     const existing = map.get(key);
     if (!existing || text(row.actualizado_en || row.fecha_control) > text(existing.actualizado_en || existing.fecha_control)) {
       map.set(key, row);
@@ -354,7 +367,7 @@ async function initControlCalidad() {
     const editButton = event.target.closest('[data-edit-quality]');
     if (editButton) {
       const control = normalizeQuality(qualityRows).find(row => qualityRowId(row) === editButton.dataset.editQuality);
-      const group = qualityDailyGroups(qualityPosRows).find(row => row.key === control?.clave_control);
+      const group = qualityDailyGroups(qualityPosRows).find(row => row.key === claveDeControl(control));
       if (control && group) openQualityForm(group, control, !qualityControlCoversGroup(control, group));
       else setStatus('No se encontro el total diario de poscosecha asociado a este control');
       return;
