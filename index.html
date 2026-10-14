@@ -10,10 +10,10 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/estilos.css?v=20260820-sidebar" />
   <script src="data/local-data.js?v=20260616-postcosecha"></script>
-  <script src="js/config.js?v=20261014-categoria"></script>
+  <script src="js/config.js?v=20261014-categoria2"></script>
   <script src="js/permisos.js?v=20260820-calidad"></script>
   <script src="js/nav.js?v=20260820-sidebar"></script>
-  <script src="js/panel-gerencial.js?v=20261014-categoria" defer></script>
+  <script src="js/panel-gerencial.js?v=20261014-categoria2" defer></script>
 </head>
 <body data-module="panel">
   <div class="shell">
@@ -99,6 +99,8 @@
           <div class="section-heading"><div><h3>Poscosecha</h3><p>Procesado, descarte y medidas.</p></div></div>
           <div class="mini-kpis" id="poscosechaKpis"></div>
           <div class="table-wrap compact-table"><table><thead><tr><th>Medida</th><th>Tallos</th></tr></thead><tbody id="medidasBody"></tbody></table></div>
+          <div class="section-heading"><div><h3>Calidad por mes</h3><p>Reparto entre tipo A y tipo B.</p></div></div>
+          <div class="table-wrap compact-table"><table><thead><tr><th>Mes</th><th>Tipo A</th><th>Tipo B</th><th>% A</th></tr></thead><tbody id="calidadMesBody"></tbody></table></div>
         </div>
 
         <div class="card panel" data-permission-group="operativo">
