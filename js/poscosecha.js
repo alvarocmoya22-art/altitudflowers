@@ -2,6 +2,7 @@ const PROCESADORAS_POSCOSECHA = ['MARGARITA', 'ANGELICA', 'CRISTINA'];
 
 let poscosechaRows = [];
 let poscosechaQualityRows = [];
+let poscosechaProduccionRows = [];
 let editingPoscosechaId = '';
 
 function poscosechaId(row) {
@@ -67,8 +68,52 @@ function poscosechaNeedsQuality(row) {
   return processDate >= ALTITUD.qualityCutoverDate || createdDate >= ALTITUD.qualityCutoverDate;
 }
 
+function diasDesde(fecha) {
+  const d = new Date(`${fecha}T00:00:00`);
+  if (Number.isNaN(d.getTime())) return null;
+  return Math.floor((Date.now() - d.getTime()) / 86400000);
+}
+
+// Un corte con saldo del mismo dia todavia puede estar en proceso. Si ya pasaron
+// dias, esos tallos no van a llegar: es merma de campo, no trabajo pendiente.
+function textoAntiguedad(dias) {
+  if (dias === null) return '';
+  if (dias <= 0) return 'hoy';
+  return dias === 1 ? 'ayer' : `hace ${dias} dias`;
+}
+
+function renderSaldoCampo(normalized) {
+  if (!$('saldoCampoBody')) return;
+  const { cortes, sinCorte } = saldoCampoPorCorte(poscosechaProduccionRows, normalized);
+  renderRows($('saldoCampoBody'), cortes, [
+    r => r.fecha,
+    r => r.siembra || '-',
+    r => r.camas || '-',
+    r => r.variedad,
+    r => fmtInt(r.cortado),
+    r => fmtInt(r.procesado),
+    r => {
+      if (r.pendiente <= 0) return '<span class="pill">al dia</span>';
+      const dias = diasDesde(r.fecha);
+      const clase = dias !== null && dias >= 2 ? 'bad' : 'warn';
+      return `<span class="pill ${clase}">${fmtInt(r.pendiente)}</span>`;
+    },
+    r => textoAntiguedad(diasDesde(r.fecha))
+  ]);
+  const aviso = $('saldoCampoAviso');
+  if (!aviso) return;
+  if (!sinCorte.length) {
+    aviso.hidden = true;
+    return;
+  }
+  const detalle = sinCorte.map(r => `${r.variedad}: ${fmtInt(r.tallos)} tallos`).join(' · ');
+  aviso.innerHTML = `<strong>Procesado sin corte registrado en campo.</strong> ${detalle}. Falta registrar esa cosecha en Produccion campo para que el saldo cuadre.`;
+  aviso.hidden = false;
+}
+
 function renderPoscosecha(rows) {
   const normalized = dedupePoscosecha(rows);
+  renderSaldoCampo(normalized);
   const qualityByPos = new Map();
   normalizeQuality(poscosechaQualityRows).forEach(control => {
     qualityPosIds(control).forEach(id => qualityByPos.set(id, control));
@@ -237,6 +282,11 @@ async function initPoscosecha() {
     poscosechaQualityRows = await loadSheet(ALTITUD.sheets.controlCalidad);
   } catch (err) {
     poscosechaQualityRows = [];
+  }
+  try {
+    poscosechaProduccionRows = await loadSheet(ALTITUD.sheets.produccion);
+  } catch (err) {
+    poscosechaProduccionRows = [];
   }
 
   renderPoscosecha(poscosechaRows);

@@ -1818,3 +1818,10 @@ td .falta{
   font-size:12px;
   font-style:italic;
 }
+
+/* Seleccion multiple de camas en produccion de campo */
+.camas-grupo{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
+.camas-grupo label{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--border);border-radius:999px;padding:7px 13px;font-size:13px;font-weight:600;cursor:pointer;user-select:none;background:#fff}
+.camas-grupo label:hover{border-color:var(--brand-olive)}
+.camas-grupo input{accent-color:var(--brand-olive);margin:0}
+.camas-grupo label:has(input:checked){background:#eff6e9;border-color:#d2dfc7;color:var(--brand-olive)}

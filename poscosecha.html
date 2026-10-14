@@ -8,12 +8,12 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/estilos.css?v=20260820-sidebar">
+  <link rel="stylesheet" href="css/estilos.css?v=20261014-camas">
   <script src="data/local-data.js?v=20260616-postcosecha"></script>
   <script src="js/config.js?v=20261014-categoria2"></script>
   <script src="js/permisos.js?v=20260820-calidad"></script>
   <script src="js/nav.js?v=20260820-sidebar"></script>
-  <script src="js/poscosecha.js?v=20261014-categoria" defer></script>
+  <script src="js/poscosecha.js?v=20261014-saldocampo" defer></script>
 </head>
 <body data-module="poscosecha" class="module-page module-postharvest">
   <div class="shell">
@@ -71,6 +71,17 @@
           <div class="field wide"><label for="observaciones">Observaciones</label><input id="observaciones"></div>
           <div class="full actions" style="justify-content:flex-end"><button class="btn primary" type="submit">Guardar poscosecha</button></div>
         </form>
+
+        <section class="card panel">
+          <div class="section-heading"><div><h3>Pendiente de campo</h3><p>Lo cortado en campo frente a lo ya procesado, por variedad y en orden de corte. Un saldo de hace dos dias o mas ya no es trabajo pendiente: es merma.</p></div></div>
+          <div class="cartera-aviso" id="saldoCampoAviso" hidden></div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Fecha corte</th><th>Siembra</th><th>Camas</th><th>Variedad</th><th>Cortado</th><th>Procesado</th><th>Pendiente</th><th>Antiguedad</th></tr></thead>
+              <tbody id="saldoCampoBody"></tbody>
+            </table>
+          </div>
+        </section>
 
         <section class="card panel postharvest-table-card">
           <div class="section-heading"><div><h3>Detalle procesado</h3><p>Historial operativo por fecha, variedad y medida.</p></div></div>
