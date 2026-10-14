@@ -227,11 +227,13 @@ async function loadVendedores() {
 function buildSaleRecord() {
   syncTallosFromBunches();
   const now = new Date();
-  const bunches = asNumber($('saleBunches').value);
   const tallos = asNumber($('saleTallos').value);
   const precio = asNumber($('salePrecio').value);
   const tipo = text($('saleTipo').value).toUpperCase();
   const medida = tipo === 'NACIONAL' ? 'NACIONAL' : normalizarMedida($('saleMedida').value);
+  // Si se escriben los tallos sin llenar los atados, el registro quedaba con
+  // bunches en 0. Se derivan de los tallos segun la unidad que corresponda.
+  const bunches = unidadesDeVenta({ tipo, medida_cm: medida, tallos, bunches: asNumber($('saleBunches').value) });
   return {
     id_venta: `V-${Date.now()}`,
     fecha: todayISO(),
@@ -244,7 +246,7 @@ function buildSaleRecord() {
     bunches,
     tallos,
     precio_unitario: precio,
-    total_venta: tallos * precio,
+    total_venta: Math.round(tallos * precio * 100) / 100,
     tipo_caja: ventaActualEsNacional() ? '' : text($('saleTipoCaja').value).toUpperCase(),
     bunches_por_caja: ventaActualEsNacional() ? 0 : asNumber($('saleCapacity').value),
     cajas_enviadas: ventaActualEsNacional() ? 0 : asNumber($('saleCajas').value),
