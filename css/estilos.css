@@ -804,6 +804,10 @@ tbody tr:hover td{
 .postharvest-table-card{
   padding:24px;
   min-width:0;
+  /* Con tres tarjetas en una grilla de dos columnas, el detalle caia en la
+     columna del formulario y quedaba estrecho para sus 13 columnas. Ocupa el
+     ancho completo, debajo de Pendiente de campo. */
+  grid-column:1/-1;
 }
 .postharvest-table-card .section-heading{
   margin-bottom:18px;
