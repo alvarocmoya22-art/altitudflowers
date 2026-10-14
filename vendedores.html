@@ -10,8 +10,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/estilos.css?v=20261014-camas" />
   <script src="data/local-data.js?v=20260616-postcosecha"></script>
-  <script src="js/config.js?v=20261014-nacional"></script>
-  <script src="js/vendedores.js?v=20261014-nacional" defer></script>
+  <script src="js/config.js?v=20261014-atados2"></script>
+  <script src="js/vendedores.js?v=20261014-atados" defer></script>
 </head>
 <body data-module="vendedores">
   <section class="login-view" id="loginView">
@@ -63,6 +63,7 @@
           <div class="field empaque-campo"><label for="saleCapacity">Bunches por caja</label><input id="saleCapacity" type="number" min="1" step="1" readonly></div>
           <div class="field empaque-campo"><label for="saleCajas">Cajas enviadas</label><input id="saleCajas" type="number" min="1" step="1" required></div>
           <div class="total-box empaque-campo"><span>Empaque</span><span id="salePacking">-</span></div>
+          <div class="total-box" id="saleAtadoBox" hidden><span>Precio por atado</span><span id="saleAtado">-</span></div>
           <div class="field wide"><label for="saleObs">Observaciones</label><input id="saleObs"></div>
           <div class="total-box"><span>Disponible</span><span id="saleDisponible">-</span></div>
           <div class="total-box"><span>Total venta</span><span id="saleTotal">$0,00</span></div>

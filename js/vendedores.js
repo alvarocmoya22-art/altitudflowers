@@ -86,9 +86,27 @@ function updateMeasureOptions() {
   if (measures.includes(selected)) $('saleMedida').value = selected;
 }
 
+function unidadVentaActual() {
+  return { tipo: $('saleTipo').value, medida_cm: $('saleMedida').value };
+}
+
 function syncTallosFromBunches() {
   const bunches = asNumber($('saleBunches').value);
-  if (bunches > 0) $('saleTallos').value = bunches * (ALTITUD.tallosPorBunch || 10);
+  if (bunches > 0) $('saleTallos').value = bunches * tallosPorUnidadVenta(unidadVentaActual());
+}
+
+// El nacional se vende por atado de 20 tallos, no por bunch de 10. El precio
+// unitario se sigue guardando por tallo para no alterar los totales ni el
+// historico; el equivalente por atado se muestra solo como referencia.
+function syncEtiquetaUnidad() {
+  const porUnidad = tallosPorUnidadVenta(unidadVentaActual());
+  const nacional = ventaActualEsNacional();
+  const label = document.querySelector('label[for="saleBunches"]');
+  if (label) label.textContent = nacional ? `Atados (${porUnidad} tallos)` : 'Bunches';
+  const caja = $('saleAtadoBox');
+  if (!caja) return;
+  caja.hidden = !nacional;
+  $('saleAtado').textContent = nacional ? `${fmtMoney(asNumber($('salePrecio').value) * porUnidad)} por atado` : '-';
 }
 
 function ventaActualEsNacional() {
@@ -110,6 +128,7 @@ function syncEmpaqueVisible() {
 
 function syncSalePacking() {
   syncEmpaqueVisible();
+  syncEtiquetaUnidad();
   if (ventaActualEsNacional()) return;
   const packing = shipmentPacking({
     medida_cm: $('saleMedida').value,
@@ -334,7 +353,7 @@ async function initVendedores() {
     syncSalePacking();
     updatePreview();
   });
-  $('salePrecio')?.addEventListener('input', updatePreview);
+  $('salePrecio')?.addEventListener('input', () => { syncEtiquetaUnidad(); updatePreview(); });
   $('saleCajas')?.addEventListener('input', updatePreview);
   $('saleBunches')?.addEventListener('input', () => {
     syncTallosFromBunches();
