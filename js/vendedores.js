@@ -407,8 +407,11 @@ async function initVendedores() {
     const record = buildSaleRecord();
     const row = getStockForSale(stockData, record.variedad, record.medida_cm);
     const msg = $('saleMessage');
-    if (!record.vendedor || !record.cliente || !record.tallos || !record.cajas_enviadas) {
-      msg.textContent = 'Completa vendedor, cliente, tallos y cajas enviadas.';
+    const faltanCajas = ventaEnCajas(record) && !record.cajas_enviadas;
+    if (!record.vendedor || !record.cliente || !record.tallos || faltanCajas) {
+      msg.textContent = ventaEnCajas(record)
+        ? 'Completa vendedor, cliente, tallos y cajas enviadas.'
+        : 'Completa vendedor, cliente y tallos.';
       msg.style.color = '#8d2929';
       return;
     }
