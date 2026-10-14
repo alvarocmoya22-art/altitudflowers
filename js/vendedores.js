@@ -91,7 +91,26 @@ function syncTallosFromBunches() {
   if (bunches > 0) $('saleTallos').value = bunches * (ALTITUD.tallosPorBunch || 10);
 }
 
+function ventaActualEsNacional() {
+  return !ventaEnCajas({ tipo: $('saleTipo').value, medida_cm: $('saleMedida').value });
+}
+
+// El nacional sale en bunches sueltos, no en cajas HB. Se ocultan los campos de
+// empaque y se les quita el required, porque si no el formulario no deja
+// guardar una venta nacional sin inventar un numero de cajas.
+function syncEmpaqueVisible() {
+  const nacional = ventaActualEsNacional();
+  document.querySelectorAll('.empaque-campo').forEach(campo => { campo.hidden = nacional; });
+  $('saleCajas').required = !nacional;
+  if (nacional) {
+    $('saleCajas').value = '';
+    $('saleCapacity').value = '';
+  }
+}
+
 function syncSalePacking() {
+  syncEmpaqueVisible();
+  if (ventaActualEsNacional()) return;
   const packing = shipmentPacking({
     medida_cm: $('saleMedida').value,
     tallos: $('saleTallos').value,
@@ -207,9 +226,9 @@ function buildSaleRecord() {
     tallos,
     precio_unitario: precio,
     total_venta: tallos * precio,
-    tipo_caja: text($('saleTipoCaja').value).toUpperCase(),
-    bunches_por_caja: asNumber($('saleCapacity').value),
-    cajas_enviadas: asNumber($('saleCajas').value),
+    tipo_caja: ventaActualEsNacional() ? '' : text($('saleTipoCaja').value).toUpperCase(),
+    bunches_por_caja: ventaActualEsNacional() ? 0 : asNumber($('saleCapacity').value),
+    cajas_enviadas: ventaActualEsNacional() ? 0 : asNumber($('saleCajas').value),
     numero_factura: '',
     estado_facturacion: 'PENDIENTE',
     facturado_en: '',
