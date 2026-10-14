@@ -10,10 +10,10 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/estilos.css?v=20260820-sidebar">
   <script src="data/local-data.js?v=20260616-postcosecha"></script>
-  <script src="js/config.js?v=20261001-anuladas2"></script>
+  <script src="js/config.js?v=20261014-categoria"></script>
   <script src="js/permisos.js?v=20260820-calidad"></script>
   <script src="js/nav.js?v=20260820-sidebar"></script>
-  <script src="js/poscosecha.js?v=20260820-calidad-diaria" defer></script>
+  <script src="js/poscosecha.js?v=20261014-categoria" defer></script>
 </head>
 <body data-module="poscosecha" class="module-page module-postharvest">
   <div class="shell">
@@ -58,7 +58,7 @@
           <div class="field"><label for="fecha">Fecha</label><input id="fecha" type="date" required></div>
           <div class="field"><label for="semana">Semana</label><input id="semana" type="number" min="1" max="53" readonly></div>
           <div class="field"><label for="variedad">Variedad</label><select id="variedad" required></select></div>
-          <div class="field"><label for="responsable">Procesadora</label><select id="responsable" required></select></div>
+          <div class="field"><label for="categoria">Categoria</label><select id="categoria" required><option value="A">A</option><option value="B">B</option></select></div><div class="field"><label for="responsable">Procesadora</label><select id="responsable" required></select></div>
           <div class="field"><label for="t70">70 cm</label><input id="t70" type="number" min="0"></div>
           <div class="field"><label for="t60">60 cm</label><input id="t60" type="number" min="0"></div>
           <div class="field"><label for="t55">55 cm</label><input id="t55" type="number" min="0"></div>
@@ -76,7 +76,7 @@
           <div class="section-heading"><div><h3>Detalle procesado</h3><p>Historial operativo por fecha, variedad y medida.</p></div></div>
           <div class="table-wrap">
             <table>
-              <thead><tr><th>Fecha</th><th>Semana</th><th>Variedad</th><th>Procesado</th><th>70</th><th>60</th><th>55</th><th>50</th><th>Nacional</th><th>Descarte</th><th>Calidad</th><th>Accion</th></tr></thead>
+              <thead><tr><th>Fecha</th><th>Semana</th><th>Variedad</th><th>Cat.</th><th>Procesado</th><th>70</th><th>60</th><th>55</th><th>50</th><th>Nacional</th><th>Descarte</th><th>Calidad</th><th>Accion</th></tr></thead>
               <tbody id="poscosechaBody"></tbody>
             </table>
           </div>

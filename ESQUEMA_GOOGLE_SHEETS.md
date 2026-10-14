@@ -14,7 +14,7 @@ Desde el 20 de agosto de 2026, Poscosecha ya no incrementa directamente el stock
 Revision obligatoria entre Poscosecha y Cuarto Frio. Se crea automaticamente al publicar el Apps Script actualizado.
 
 Campos:
-`id_control_calidad`, `clave_control`, `id_poscosecha`, `ids_poscosecha`, `fecha_proceso`, `fecha_control`, `semana`, `variedad`, `procesadora`, `procesadoras`, `registros_procesados`, `tallos_declarados`, `tallos_70_aprobados`, `tallos_60_aprobados`, `tallos_55_aprobados`, `tallos_50_aprobados`, `nacional_aprobado`, `tallos_aprobados`, `tallos_rechazados`, `estado_calidad`, `controlador`, `motivo_rechazo`, `observaciones`, `creado_en`, `actualizado_en`, `origen`
+`id_control_calidad`, `clave_control`, `id_poscosecha`, `ids_poscosecha`, `fecha_proceso`, `fecha_control`, `semana`, `variedad` `categoria`, `procesadora`, `procesadoras`, `registros_procesados`, `tallos_declarados`, `tallos_70_aprobados`, `tallos_60_aprobados`, `tallos_55_aprobados`, `tallos_50_aprobados`, `nacional_aprobado`, `tallos_aprobados`, `tallos_rechazados`, `estado_calidad`, `controlador`, `motivo_rechazo`, `observaciones`, `creado_en`, `actualizado_en`, `origen`
 
 Cada fila representa un solo control de calidad para una combinacion `fecha_proceso + variedad`. Los campos `ids_poscosecha` y `procesadoras` conservan la trazabilidad de los registros originales sin separar la revision por persona.
 
@@ -107,3 +107,17 @@ Campos:
 La plantilla creada para importar o copiar a Google Sheets está en:
 
 `Plantilla_Google_Sheets_Altitud_Flowers.xlsx`
+
+### Categoria A y B
+
+Al procesar, la flor se separa en dos categorias: **A** y **B**. La B tiene menos
+calidad pero **se vende al mismo precio**: la categoria sirve para seguimiento
+interno, no para facturar. Por eso vive solo en `POSCOSECHA` y `CONTROL_CALIDAD`,
+y no llega a cuarto frio ni a ventas, donde partir el stock en dos no aportaria
+nada y ensuciaria el selector de despachos.
+
+Adry revisa cada categoria por separado, asi que la clave de agrupacion del
+control pasa de `fecha_proceso|variedad` a `fecha_proceso|variedad|categoria`.
+Cuando la categoria viene vacia la clave queda como antes, de modo que los
+controles anteriores a este cambio se siguen reconociendo y no reaparecen
+pendientes.

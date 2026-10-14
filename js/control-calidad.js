@@ -54,7 +54,7 @@ function uniqueQualityPos(rows) {
 function qualityDailyGroups(rows) {
   const map = new Map();
   uniqueQualityPos(rows).forEach(row => {
-    const key = qualityGroupKey(row.fecha, row.variedad);
+    const key = qualityGroupKey(row.fecha, row.variedad, row.categoria);
     if (!row.fecha || !row.variedad) return;
     if (!map.has(key)) {
       map.set(key, {
@@ -62,6 +62,7 @@ function qualityDailyGroups(rows) {
         fecha: row.fecha,
         semana: row.semana || isoWeekAltitud(row.fecha),
         variedad: row.variedad,
+        categoria: row.categoria || '',
         ids_poscosecha: [],
         procesadoras: [],
         registros: 0,
@@ -90,13 +91,13 @@ function qualityDailyGroups(rows) {
       ids_poscosecha: group.ids_poscosecha.sort(),
       procesadoras: group.procesadoras.sort()
     }))
-    .sort((a, b) => text(b.fecha).localeCompare(text(a.fecha)) || text(a.variedad).localeCompare(text(b.variedad)));
+    .sort((a, b) => text(b.fecha).localeCompare(text(a.fecha)) || text(a.variedad).localeCompare(text(b.variedad)) || text(a.categoria).localeCompare(text(b.categoria)));
 }
 
 function qualityControlMap() {
   const map = new Map();
   normalizeQuality(qualityRows).forEach(row => {
-    const key = row.clave_control || qualityGroupKey(row.fecha_proceso, row.variedad);
+    const key = row.clave_control || qualityGroupKey(row.fecha_proceso, row.variedad, row.categoria);
     const existing = map.get(key);
     if (!existing || text(row.actualizado_en || row.fecha_control) > text(existing.actualizado_en || existing.fecha_control)) {
       map.set(key, row);
@@ -133,6 +134,7 @@ function renderQuality() {
   renderRows($('qualityPendingBody'), pending, [
     row => row.fecha,
     row => row.variedad,
+    row => row.categoria ? `<span class="pill ${row.categoria === 'A' ? 'ok' : 'warn'}">${row.categoria}</span>` : '-',
     row => fmtInt(row.registros),
     row => fmtInt(qualityDeclared(row)),
     row => `<button class="btn primary small" type="button" data-review-quality="${encodeURIComponent(row.key)}">Revisar</button>`
@@ -142,6 +144,7 @@ function renderQuality() {
     row => row.fecha_control,
     row => row.fecha_proceso,
     row => row.variedad,
+    row => row.categoria ? `<span class="pill ${row.categoria === 'A' ? 'ok' : 'warn'}">${row.categoria}</span>` : '-',
     row => fmtInt(row.registros_procesados || qualityPosIds(row).length),
     row => fmtInt(row.tallos_declarados),
     row => fmtInt(row.tallos_aprobados),
@@ -260,6 +263,7 @@ function buildQualityRecord() {
     fecha_control: todayISO(),
     semana: group.semana,
     variedad: group.variedad,
+    categoria: group.categoria || '',
     procesadora: 'TOTAL DIA',
     procesadoras: group.procesadoras.join(', '),
     registros_procesados: group.registros,

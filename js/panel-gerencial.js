@@ -32,9 +32,9 @@ async function buildDashboard(){
   const ingresos=filterRows(ingresosRaw,filters,'finanzas');
   const comparativo=filterRows(comparativoRaw,filters,'comparativo');
   const stockData=calculateColdRoomStock(controlRaw,ventasRaw,filters);
-  const controlesPorTotal=new Map(controlesTodos.map(row=>[row.clave_control||qualityGroupKey(row.fecha_proceso,row.variedad),row]));
+  const controlesPorTotal=new Map(controlesTodos.map(row=>[row.clave_control||qualityGroupKey(row.fecha_proceso,row.variedad,row.categoria),row]));
   const gruposCalidad=new Map();
-  poscosecha.filter(row=>row.fecha>=ALTITUD.qualityCutoverDate||normalizarFecha(text(row.creado_en).slice(0,10))>=ALTITUD.qualityCutoverDate).forEach(row=>{const key=qualityGroupKey(row.fecha,row.variedad);if(!gruposCalidad.has(key))gruposCalidad.set(key,{key,ids:[]});gruposCalidad.get(key).ids.push(text(row.id_poscosecha))});
+  poscosecha.filter(row=>row.fecha>=ALTITUD.qualityCutoverDate||normalizarFecha(text(row.creado_en).slice(0,10))>=ALTITUD.qualityCutoverDate).forEach(row=>{const key=qualityGroupKey(row.fecha,row.variedad,row.categoria);if(!gruposCalidad.has(key))gruposCalidad.set(key,{key,ids:[]});gruposCalidad.get(key).ids.push(text(row.id_poscosecha))});
   const pendientesCalidad=Array.from(gruposCalidad.values()).filter(group=>{const control=controlesPorTotal.get(group.key);if(!control)return true;return qualityPosIds(control).sort().join('|')!==group.ids.filter(Boolean).sort().join('|')});
   const stock=stockData.porVariedad;
   const rendimientoBase=poscosecha.map(row=>({fecha:row.fecha,semana:row.semana,procesadora:row.responsable,tallos_procesados:row.comercial+row.nacional,minutos_trabajados:row.minutos_trabajados,horas_trabajadas:asNumber(row.minutos_trabajados)/60,estado:row.estado,variedad:row.variedad}));

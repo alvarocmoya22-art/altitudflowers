@@ -82,6 +82,7 @@ function renderPoscosecha(rows) {
     r => r.fecha,
     r => r.semana,
     r => r.variedad,
+    r => r.categoria ? `<span class="pill ${r.categoria === 'A' ? 'ok' : 'warn'}">${r.categoria}</span>` : '<span class="celda-nota">-</span>',
     r => fmtInt(r.tallos_procesados),
     r => fmtInt(r.tallos_70),
     r => fmtInt(r.tallos_60),
@@ -147,6 +148,7 @@ function buildPoscosechaRecord() {
     fecha: $('fecha').value,
     semana: asNumber($('semana').value) || isoWeekPoscosecha($('fecha').value),
     variedad: text($('variedad').value).toUpperCase(),
+    categoria: normalizarCategoria($('categoria')?.value) || 'A',
     tallos_procesados: procesados,
     tallos_70: t70,
     tallos_60: t60,
@@ -180,6 +182,7 @@ function setPoscosechaEditMode(active) {
 function clearPoscosechaForm() {
   editingPoscosechaId = '';
   $('posForm').reset();
+  $('categoria').value = 'A';
   $('fecha').value = todayISO();
   updatePoscosechaWeek();
   updateTotalPoscosecha();
@@ -191,6 +194,7 @@ function loadPoscosechaEditForm(row) {
   $('fecha').value = text(row.fecha);
   $('semana').value = asNumber(row.semana) || isoWeekPoscosecha(row.fecha);
   $('variedad').value = normalizeVariety(row.variedad);
+  $('categoria').value = normalizarCategoria(row.categoria) || 'A';
   $('responsable').value = text(row.responsable).toUpperCase();
   $('t70').value = row.tallos_70 || '';
   $('t60').value = row.tallos_60 || '';
