@@ -19,3 +19,8 @@ build/
 # Paquetes generados para despliegue manual
 *.zip
 .claude/
+
+# Documentos financieros: el repositorio es publico
+*.pdf
+Analisis_Financiero_*
+Balance_*
