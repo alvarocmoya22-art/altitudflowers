@@ -12,7 +12,7 @@
   <script src="js/config.js?v=20261014-categoria"></script>
   <script src="js/permisos.js?v=20260820-calidad-integracion"></script>
   <script src="js/nav.js?v=20260820-sidebar"></script>
-  <script src="js/rendimiento-procesadoras.js?v=20260813-auditoria" defer></script>
+  <script src="js/rendimiento-procesadoras.js?v=20261014-categoria" defer></script>
 </head>
 <body data-module="rendimiento" class="module-page module-performance">
   <div class="shell">
@@ -51,6 +51,7 @@
         <div class="card kpi"><div class="label">Bunches</div><div class="value" id="kBunches">-</div></div>
         <div class="card kpi"><div class="label">Promedio tallos/hora</div><div class="value" id="kPromedio">-</div></div>
         <div class="card kpi"><div class="label">Mejor rendimiento</div><div class="value" id="kMejor">-</div></div>
+        <div class="card kpi"><div class="label">Tipo A</div><div class="value" id="kTipoA">-</div><div class="note" id="kTipoANota">Sobre los partes categorizados</div></div>
       </section>
 
       <div class="module-layout performance-layout">
@@ -72,8 +73,21 @@
           </div>
           <div class="table-wrap">
             <table>
-              <thead><tr><th>Procesadora</th><th>Registros</th><th>Bunches</th><th>Tallos</th><th>Minutos</th><th>Horas</th><th>Tallos/hora</th></tr></thead>
+              <thead><tr><th>Procesadora</th><th>Registros</th><th>Bunches</th><th>Tallos</th><th>Minutos</th><th>Horas</th><th>Tallos/hora</th><th>% Tipo A</th></tr></thead>
               <tbody id="resumenBody"></tbody>
+            </table>
+          </div>
+
+          <div class="section-heading performance-detail-heading">
+            <div>
+              <h3>Calidad por variedad</h3>
+              <p>Reparto entre tipo A y tipo B. Solo entran los partes que ya se registraron con categoria.</p>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Variedad</th><th>Tallos A</th><th>Tallos B</th><th>Total</th><th>% Tipo A</th></tr></thead>
+              <tbody id="variedadCategoriaBody"></tbody>
             </table>
           </div>
 
@@ -85,7 +99,7 @@
           </div>
           <div class="table-wrap performance-detail-wrap">
             <table>
-              <thead><tr><th>Fecha</th><th>Semana</th><th>Procesadora</th><th>Variedad</th><th>Medida</th><th>Bunches</th><th>Tallos</th><th>Minutos</th><th>Horas</th><th>Tallos/hora</th><th>Estado</th><th>Accion</th></tr></thead>
+              <thead><tr><th>Fecha</th><th>Semana</th><th>Procesadora</th><th>Variedad</th><th>Cat.</th><th>Medida</th><th>Bunches</th><th>Tallos</th><th>Minutos</th><th>Horas</th><th>Tallos/hora</th><th>Estado</th><th>Accion</th></tr></thead>
               <tbody id="rendimientoBody"></tbody>
             </table>
           </div>
