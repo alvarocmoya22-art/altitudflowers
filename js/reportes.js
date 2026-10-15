@@ -1,6 +1,7 @@
 async function initReportes(){
   setStatus('Calculando reportes...');
   const {processed,quality,sales}=await loadProcessedAndSales();
+  await loadSaldoAperturaCuartoFrio();
   const stockData=calculateColdRoomStock(quality,sales);
   const totalProcesado=processed.reduce((a,r)=>a+r.tallos_procesados,0);
   const totalUtil=processed.reduce((a,r)=>a+r.util,0);

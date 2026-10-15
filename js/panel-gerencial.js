@@ -36,6 +36,7 @@ async function buildDashboard(){
   const accounts=filterRows(normalizeAccounts(accountsRaw),filters,'finanzas');
   const ingresos=filterRows(ingresosRaw,filters,'finanzas');
   const comparativo=filterRows(comparativoRaw,filters,'comparativo');
+  await loadSaldoAperturaCuartoFrio();
   const stockData=calculateColdRoomStock(controlRaw,ventasRaw,filters);
   const controlesPorTotal=new Map(controlesTodos.map(row=>[row.clave_control||qualityGroupKey(row.fecha_proceso,row.variedad,row.categoria),row]));
   const gruposCalidad=new Map();

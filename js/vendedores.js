@@ -215,6 +215,7 @@ function reconcilePendingSales() {
 async function loadVendedores() {
   setStatus('Cargando ventas...');
   const data = await loadProcessedAndSales();
+  await loadSaldoAperturaCuartoFrio();
   qualityRows = data.quality;
   salesRows = data.sales;
   pendingSalesRows = data.pendingSales || [];

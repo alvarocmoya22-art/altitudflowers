@@ -61,7 +61,12 @@ function renderColdRoom(data) {
     row => fmtInt(row.procesado),
     row => fmtInt(row.vendido),
     row => fmtInt(row.stockDisponible),
-    row => row.observacion || statePill(row.estado)
+    row => {
+      if (!row.observacion) return statePill(row.estado);
+      const texto = text(row.observacion);
+      const corto = texto.length > 42 ? `${texto.slice(0, 42)}...` : texto;
+      return `${statePill(row.estado)} <span class="celda-nota" title="${texto.replace(/"/g, '&quot;')}">${corto}</span>`;
+    }
   ]);
 
   $('stockAlertsBody').innerHTML = data.alertas.length
@@ -342,6 +347,7 @@ async function refreshColdRoomData() {
   try {
     coldQualityRows = await loadSheet(ALTITUD.sheets.controlCalidad);
     coldSalesRows = await loadSheet(ALTITUD.sheets.ventas);
+    await loadSaldoAperturaCuartoFrio();
     renderColdRoom(calculateColdRoomStock(coldQualityRows, coldSalesRows, coldFilters()));
     setStatus('Stock actualizado con control de calidad aprobado');
   } catch (err) {
