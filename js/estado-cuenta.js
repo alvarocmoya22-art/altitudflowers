@@ -411,6 +411,32 @@ function parseInvoiceAmount(value) {
   return Number.isFinite(amount) ? amount : 0;
 }
 
+// El SRI imprime las tres etiquetas del comprador seguidas y recien despues los
+// tres valores en el mismo orden, asi que "la linea siguiente a la etiqueta" es
+// otra etiqueta. Por eso el cliente de la factura 094 quedo como
+// "Identificacion 1802747673" en vez del nombre.
+const ETIQUETAS_FACTURA = [
+  'RAZON SOCIAL', 'NOMBRES Y APELLIDOS', 'IDENTIFICACION', 'FECHA GUIA',
+  'GUIA DE REMISION', 'DIRECCION', 'PLACA', 'MATRICULA', 'COMPRADOR',
+  'ADQUIRENTE', 'TELEFONO', 'EMAIL', 'CORREO', 'CLIENTE'
+];
+
+function esEtiquetaDeFactura(line) {
+  const normalized = normalizeInvoiceText(line);
+  if (!normalized) return true;
+  return ETIQUETAS_FACTURA.some(etiqueta => normalized.includes(etiqueta));
+}
+
+// Un nombre de comprador tiene letras y no es una fecha ni un numero suelto.
+function pareceNombreCliente(line) {
+  const value = text(line);
+  if (!value || esEtiquetaDeFactura(value)) return false;
+  if (!/[a-zA-ZaeiouAEIOUnNÀ-ɏ]{3}/.test(value)) return false;
+  if (/^\d{1,2}[\/-]\d{1,2}[\/-]\d{2,4}/.test(value)) return false;
+  if (/^[\d\s.,:\/-]+$/.test(value)) return false;
+  return true;
+}
+
 function valueAfterInvoiceLabel(lines, label, fromEnd = false) {
   const wanted = normalizeInvoiceText(label);
   const indexes = Array.from(lines.keys());
@@ -424,8 +450,27 @@ function valueAfterInvoiceLabel(lines, label, fromEnd = false) {
     let candidate = colon >= 0 ? line.slice(colon + 1) : line.slice(position + label.length);
     candidate = candidate.replace(/^[\s#.:\-]+/, '').trim();
     if (candidate) return candidate;
-    const next = text(lines[index + 1]);
-    if (next) return next;
+    const anterior = text(lines[index - 1]);
+    if (pareceNombreCliente(anterior)) return anterior;
+    for (let paso = index + 1; paso < lines.length && paso <= index + 8; paso += 1) {
+      if (pareceNombreCliente(lines[paso])) return text(lines[paso]);
+    }
+  }
+  return '';
+}
+
+// La cedula o RUC del comprador es la primera linea de 10 a 13 digitos que
+// aparece despues del nombre. Antes no se capturaba y la cartera quedaba sin
+// con que agrupar al cliente.
+function identificacionDespuesDe(lines, cliente) {
+  if (!cliente) return '';
+  const objetivo = normalizeInvoiceText(cliente);
+  for (let index = 0; index < lines.length; index += 1) {
+    if (!normalizeInvoiceText(lines[index]).includes(objetivo)) continue;
+    for (let paso = index + 1; paso < lines.length && paso <= index + 4; paso += 1) {
+      const candidato = text(lines[paso]).replace(/\D/g, '');
+      if (candidato.length >= 10 && candidato.length <= 13) return candidato;
+    }
   }
   return '';
 }
@@ -455,7 +500,8 @@ function findInvoiceTotal(lines) {
     const wanted = normalizeInvoiceText(label);
     for (let index = lines.length - 1; index >= 0; index -= 1) {
       if (!normalizeInvoiceText(lines[index]).includes(wanted)) continue;
-      const amount = parseInvoiceAmount(`${lines[index]} ${lines[index + 1] || ''}`);
+      const amount = parseInvoiceAmount(lines[index])
+        || parseInvoiceAmount(`${lines[index]} ${lines[index + 1] || ''}`);
       if (amount > 0) return amount;
     }
   }
@@ -484,11 +530,14 @@ function parseInvoicePdfText(lines) {
       .map(line => line.match(/FACTURA(?:\s+(?:NRO|NO|NUMERO))?\s*[:#.-]*\s*(\d{1,20})\b/))
       .find(Boolean);
   const numeroFactura = numberMatch ? numberMatch[1].replace(/\s/g, '') : '';
-  const fecha = findLabeledInvoiceDate(lines, ['FECHA DE EMISION', 'FECHA EMISION', 'EMISION']);
+  const fecha = findLabeledInvoiceDate(lines, ['FECHA DE EMISION', 'FECHA EMISION', 'FECHA Y HORA DE', 'AUTORIZACION', 'FECHA']);
   let vencimiento = findLabeledInvoiceDate(lines, ['FECHA DE VENCIMIENTO', 'FECHA VENCIMIENTO', 'VENCIMIENTO', 'VENCE']);
   if (!vencimiento && fecha) {
     const creditMatch = normalizedFullText.match(/(?:PLAZO|CREDITO(?:\s+A)?)\D{0,16}(\d{1,3})\s*DIAS/);
     if (creditMatch) vencimiento = addInvoiceCreditDays(fecha, creditMatch[1]);
+  }
+  if (!vencimiento && fecha) {
+    vencimiento = addInvoiceCreditDays(fecha, ALTITUD.diasCreditoCliente || 45);
   }
   const clienteDirecto = valueAfterInvoiceLabel(lines, 'CLIENTE');
   const clienteRazon = valueAfterInvoiceLabel(lines, 'RAZON SOCIAL / NOMBRES Y APELLIDOS', true)
@@ -498,9 +547,10 @@ function parseInvoicePdfText(lines) {
   const cliente = cleanInvoiceClient(clienteDirecto || clienteRazon);
   return {
     cliente,
+    identificacion: identificacionDespuesDe(lines, cliente),
     fecha,
     numeroFactura,
-    concepto: /FLOR|ROSA|GYPSOPHILA|NEW RED|SPRING PEACH|GREEN XL/.test(normalizedFullText) ? 'Ventas de flor' : 'Facturas emitidas',
+    concepto: /FLOR|ROSA|GYPSOPHILA|HYPERICUM|NEW RED|SPRING PEACH|GREEN XL/.test(normalizedFullText) ? 'Ventas de flor' : 'Facturas emitidas',
     valor: findInvoiceTotal(lines),
     vencimiento
   };
@@ -537,6 +587,9 @@ async function extractInvoicePdfLines(file) {
 }
 
 function applyInvoicePdfData(data) {
+  // La identificacion viaja pegada al campo de cliente: si despues se escribe
+  // otro cliente a mano, deja de corresponder y se limpia.
+  if ($('factCliente')) $('factCliente').dataset.identificacion = text(data.identificacion);
   const values = [
     ['factCliente', data.cliente],
     ['factFecha', data.fecha],
@@ -714,6 +767,9 @@ async function setupForms() {
   ['shipmentClientFilter', 'shipmentStatusFilter', 'shipmentFromFilter', 'shipmentToFilter'].forEach(id => $(id).addEventListener('input', renderShipmentInventory));
   $('selectClientShipmentsBtn').addEventListener('click', selectClientShipments);
   $('factCliente').addEventListener('change', selectClientShipments);
+  // Si el cliente se escribe a mano, la identificacion leida del PDF ya no
+  // corresponde a ese nombre.
+  $('factCliente').addEventListener('input', event => { event.target.dataset.identificacion = ''; });
   $('pendingShipmentsBody').addEventListener('change', event => {
     const checkbox = event.target.closest('[data-shipment-id]');
     if (!checkbox) return;
@@ -757,6 +813,7 @@ async function setupForms() {
       fecha_vencimiento: $('factVence').value,
       vendedor: '',
       observacion: text($('factObs').value),
+      ruc_cedula: text($('factCliente')?.dataset.identificacion),
       ids_ventas: shipments.map(row => row.id_venta).join('|'),
       tallos_enviados: shipmentSummary.tallos,
       bunches_enviados: shipmentSummary.bunches,
